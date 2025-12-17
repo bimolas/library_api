@@ -1,0 +1,38 @@
+version: '3.8'
+services:
+  neo4j:
+    image: neo4j:latest
+    container_name: neo4j-library
+    ports:
+      - '7687:7687'
+      - '7474:7474'
+    environment:
+      NEO4J_AUTH: neo4j/password
+      NEO4J_PLUGINS: '["apoc"]'
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+    networks:
+      - library-network
+
+  app:
+    build: .
+    container_name: library-api
+    ports:
+      - '3000:3000'
+    environment:
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: password
+      JWT_SECRET: your-secret-key-here
+    depends_on:
+      - neo4j
+    networks:
+      - library-network
+
+volumes:
+  neo4j-data:
+  neo4j-logs:
+
+networks:
+  library-network:

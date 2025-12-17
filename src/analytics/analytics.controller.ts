@@ -1,0 +1,62 @@
+import { Controller, Get, UseGuards, Param } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { AnalyticsService } from "./analytics.service";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RoleGuard } from "../auth/guards/role.guard";
+import { Roles } from "../auth/decorators/roles.decorator";
+
+@ApiTags("Analytics")
+@Controller("analytics")
+export class AnalyticsController {
+  constructor(private analyticsService: AnalyticsService) {}
+
+  @Get("user/me")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Get analytics for current user" })
+  async getUserAnalytics(user: any) {
+    return this.analyticsService.getUserAnalytics(user.userId);
+  }
+
+  @Get("trending-books")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Get trending books" })
+  async getTrendingBooks() {
+    return this.analyticsService.getTrendingBooks();
+  }
+
+  @Get("most-reserved")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Get most reserved books" })
+  async getMostReservedBooks() {
+    return this.analyticsService.getMostReservedBooks();
+  }
+
+  @Get("demand-vs-supply")
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles("ADMIN")
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Get demand vs supply analysis (admin only)" })
+  async getDemandVsSupply() {
+    return this.analyticsService.getDemandVsSupply();
+  }
+
+  @Get("user/:userId/genre-distribution")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Get genre distribution for a user" })
+  async getGenreDistribution(@Param("userId") userId: string) {
+    return this.analyticsService.getGenreDistribution(userId);
+  }
+
+  @Get("late-returns")
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles("ADMIN")
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Get late return statistics (admin only)" })
+  async getLateReturnStatistics() {
+    return this.analyticsService.getLateReturnStatistics();
+  }
+}

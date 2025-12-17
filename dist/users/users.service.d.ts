@@ -1,0 +1,55 @@
+import { Neo4jService } from "../neo4j/neo4j.service";
+import type { CreateUserDto } from "./dto/create-user.dto";
+export declare class UsersService {
+    private neo4j;
+    constructor(neo4j: Neo4jService);
+    create(createUserDto: CreateUserDto): Promise<{
+        id: any;
+        email: any;
+        name: any;
+        role: any;
+        score: any;
+        tier: any;
+        createdAt: any;
+    }>;
+    findByEmail(email: string): Promise<{
+        id: any;
+        email: any;
+        name: any;
+        role: any;
+        score: any;
+        tier: any;
+        createdAt: any;
+    } | null>;
+    findById(id: string): Promise<{
+        id: any;
+        email: any;
+        name: any;
+        role: any;
+        score: any;
+        tier: any;
+        createdAt: any;
+    } | null>;
+    getUserProfile(userId: string): Promise<{
+        borrowCount: any;
+        reservationCount: any;
+        id: any;
+        email: any;
+        name: any;
+        role: any;
+        score: any;
+        tier: any;
+        createdAt: any;
+    }>;
+    getAllUsers(limit?: number, skip?: number): Promise<any>;
+    updateScore(userId: string, newScore: number): Promise<{
+        id: any;
+        email: any;
+        name: any;
+        role: any;
+        score: any;
+        tier: any;
+        createdAt: any;
+    }>;
+    private mapNeo4jToUser;
+}
