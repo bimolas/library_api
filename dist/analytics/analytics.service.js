@@ -23,18 +23,54 @@ let AnalyticsService = class AnalyticsService {
       OPTIONAL MATCH (u)-[:RESERVED]->(r:Reservation)
       OPTIONAL MATCH (u)-[:REVIEWED]->(rev:Review)-[:ON]->(book:Book)-[:BELONGS_TO]->(g:Genre)
       OPTIONAL MATCH (u)-[:HAS_SCORE_EVENT]->(se:ScoreEvent)
+      WITH u, u.score AS currentScore, u.tier AS tier,
+           COUNT(DISTINCT b) AS borrowCount,
+           COUNT(DISTINCT r) AS reservationCount,
+           COUNT(DISTINCT rev) AS reviewCount,
+           COLLECT(DISTINCT g.name) AS genresRead,
+           COUNT(DISTINCT se) AS totalScoreEvents
       RETURN {
-        borrowCount: COUNT(DISTINCT b),
-        reservationCount: COUNT(DISTINCT r),
-        reviewCount: COUNT(DISTINCT rev),
-        genresRead: COLLECT(DISTINCT g.name),
-        totalScoreEvents: COUNT(DISTINCT se),
-        currentScore: u.score,
-        tier: u.tier
+        borrowCount: borrowCount,
+        reservationCount: reservationCount,
+        reviewCount: reviewCount,
+        genresRead: genresRead,
+        totalScoreEvents: totalScoreEvents,
+        currentScore: currentScore,
+        tier: tier
       } as analytics
     `;
         const result = await this.neo4j.read(query, { userId });
-        return result.records[0].get("analytics");
+        if (!result.records || result.records.length === 0) {
+            return {
+                borrowCount: 0,
+                reservationCount: 0,
+                reviewCount: 0,
+                genresRead: [],
+                totalScoreEvents: 0,
+                currentScore: 0,
+                tier: null,
+            };
+        }
+        const raw = result.records[0].get("analytics");
+        return {
+            borrowCount: raw.borrowCount && typeof raw.borrowCount.toNumber === "function"
+                ? raw.borrowCount.toNumber()
+                : Number(raw.borrowCount) || 0,
+            reservationCount: raw.reservationCount && typeof raw.reservationCount.toNumber === "function"
+                ? raw.reservationCount.toNumber()
+                : Number(raw.reservationCount) || 0,
+            reviewCount: raw.reviewCount && typeof raw.reviewCount.toNumber === "function"
+                ? raw.reviewCount.toNumber()
+                : Number(raw.reviewCount) || 0,
+            genresRead: raw.genresRead || [],
+            totalScoreEvents: raw.totalScoreEvents && typeof raw.totalScoreEvents.toNumber === "function"
+                ? raw.totalScoreEvents.toNumber()
+                : Number(raw.totalScoreEvents) || 0,
+            currentScore: raw.currentScore && typeof raw.currentScore.toNumber === "function"
+                ? raw.currentScore.toNumber()
+                : raw.currentScore ?? 0,
+            tier: raw.tier ?? null,
+        };
     }
     async getTrendingBooks(limit = 10) {
         const query = `
@@ -110,16 +146,26 @@ let AnalyticsService = class AnalyticsService {
         const query = `
       MATCH (b:Borrow { status: 'COMPLETED' })
       WHERE b.returnDate > b.dueDate
-      WITH b, 
-           ROUND((b.returnDate.epochMillis - b.dueDate.epochMillis) / (24.0 * 60 * 60 * 1000)) as lateDays
+      WITH ROUND((b.returnDate.epochMillis - b.dueDate.epochMillis) / (24.0 * 60 * 60 * 1000)) AS lateDays
+      WITH COUNT(*) AS totalLateReturns, AVG(lateDays) AS averageLateDays, MAX(lateDays) AS maxLateDays
+      CALL {
+        MATCH (x:Borrow { status: 'COMPLETED' })
+        RETURN COUNT(x) AS totalCompleted
+      }
       RETURN {
-        totalLateReturns: COUNT(b),
-        averageLateDays: AVG(lateDays),
-        maxLateDays: MAX(lateDays),
-        lateReturnRate: ROUND(COUNT(b) / (SELECT COUNT(*) FROM Borrow WHERE status = 'COMPLETED') * 100.0, 2)
-      } as stats
+        totalLateReturns: totalLateReturns,
+        averageLateDays: averageLateDays,
+        maxLateDays: maxLateDays,
+        lateReturnRate: CASE 
+          WHEN totalCompleted > 0 
+          THEN ROUND(toFloat(totalLateReturns) / toFloat(totalCompleted) * 100.0, 2) 
+          ELSE 0 
+        END
+      } AS stats
     `;
         const result = await this.neo4j.read(query);
+        if (!result.records || result.records.length === 0)
+            return { totalLateReturns: 0, averageLateDays: null, maxLateDays: null, lateReturnRate: 0 };
         return result.records[0].get("stats");
     }
 };

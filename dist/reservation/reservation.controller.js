@@ -16,7 +16,9 @@ exports.ReservationController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const reservation_service_1 = require("./reservation.service");
+const create_reservation_dto_1 = require("./dto/create-reservation.dto");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
+const current_user_decorator_1 = require("../auth/decorators/current-user.decorator");
 let ReservationController = class ReservationController {
     constructor(reservationService) {
         this.reservationService = reservationService;
@@ -43,9 +45,11 @@ __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)("access-token"),
     (0, swagger_1.ApiOperation)({ summary: "Create a reservation" }),
+    (0, swagger_1.ApiBody)({ type: create_reservation_dto_1.CreateReservationDto }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Function]),
+    __metadata("design:paramtypes", [Object, create_reservation_dto_1.CreateReservationDto]),
     __metadata("design:returntype", Promise)
 ], ReservationController.prototype, "createReservation", null);
 __decorate([
@@ -83,6 +87,7 @@ __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)("access-token"),
     (0, swagger_1.ApiOperation)({ summary: "Get user reservations" }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)

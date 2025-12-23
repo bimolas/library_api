@@ -69,7 +69,9 @@ let AuthService = class AuthService {
         if (!user) {
             throw new common_1.UnauthorizedException("Invalid credentials");
         }
+        console.log("🚀 ~ AuthService ~ signIn ~ user:", user);
         const isPasswordValid = await bcrypt.compare(signInDto.password, user.password);
+        console.log("🚀 ~ AuthService ~ signIn ~ isPasswordValid:", isPasswordValid);
         if (!isPasswordValid) {
             throw new common_1.UnauthorizedException("Invalid credentials");
         }

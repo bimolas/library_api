@@ -14,7 +14,12 @@ export declare class ScoreService {
     getUserScore(userId: string): Promise<{
         currentScore: any;
         tier: any;
-        events: any;
+        events: {
+            id: any;
+            type: any;
+            points: any;
+            createdAt: any;
+        }[];
     }>;
     getPrivileges(userId: string): Promise<{
         maxConcurrentBorrows: number;

@@ -19,6 +19,15 @@ const books_service_1 = require("./books.service");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const roles_decorator_1 = require("../auth/decorators/roles.decorator");
 const role_guard_1 = require("../auth/guards/role.guard");
+const create_book_dto_1 = require("./dto/create-book.dto");
+const class_validator_1 = require("class-validator");
+class AddCopiesDto {
+}
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 2 }),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], AddCopiesDto.prototype, "quantity", void 0);
 let BooksController = class BooksController {
     constructor(booksService) {
         this.booksService = booksService;
@@ -43,19 +52,28 @@ __decorate([
     (0, roles_decorator_1.Roles)("ADMIN"),
     (0, swagger_1.ApiBearerAuth)("access-token"),
     (0, swagger_1.ApiOperation)({ summary: "Create a new book (admin only)" }),
+    (0, swagger_1.ApiBody)({
+        type: create_book_dto_1.CreateBookDto,
+    }),
+    __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [create_book_dto_1.CreateBookDto]),
     __metadata("design:returntype", Promise)
 ], BooksController.prototype, "createBook", null);
 __decorate([
     (0, common_1.Post)(":id/copies"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, role_guard_1.RoleGuard),
-    (0, roles_decorator_1.Roles)("ADMIN"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, role_guard_1.RoleGuard)
+    // @Roles("ADMIN")
+    ,
     (0, swagger_1.ApiBearerAuth)("access-token"),
     (0, swagger_1.ApiOperation)({ summary: "Add copies to a book (admin only)" }),
+    (0, swagger_1.ApiBody)({
+        type: AddCopiesDto,
+    }),
     __param(0, (0, common_1.Param)("id")),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, AddCopiesDto]),
     __metadata("design:returntype", Promise)
 ], BooksController.prototype, "addCopies", null);
 __decorate([

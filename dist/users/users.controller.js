@@ -19,6 +19,8 @@ const users_service_1 = require("./users.service");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const role_guard_1 = require("../auth/guards/role.guard");
 const roles_decorator_1 = require("../auth/decorators/roles.decorator");
+const authenticated_user_decorator_1 = require("../utils/authenticated-user.decorator");
+const create_user_with_role_dto_1 = require("./dto/create-user-with-role.dto");
 let UsersController = class UsersController {
     constructor(usersService) {
         this.usersService = usersService;
@@ -32,6 +34,9 @@ let UsersController = class UsersController {
     async getAllUsers() {
         return this.usersService.getAllUsers();
     }
+    async createUser(createUserDto) {
+        return this.usersService.createWithRole(createUserDto);
+    }
 };
 exports.UsersController = UsersController;
 __decorate([
@@ -39,6 +44,7 @@ __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)("access-token"),
     (0, swagger_1.ApiOperation)({ summary: "Get current user profile" }),
+    __param(0, (0, authenticated_user_decorator_1.AuthenticatedUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
@@ -63,6 +69,18 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "getAllUsers", null);
+__decorate([
+    (0, common_1.Post)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, role_guard_1.RoleGuard),
+    (0, roles_decorator_1.Roles)("ADMIN"),
+    (0, swagger_1.ApiBearerAuth)("access-token"),
+    (0, swagger_1.ApiOperation)({ summary: "Create a new user (admin only)" }),
+    (0, swagger_1.ApiBody)({ type: create_user_with_role_dto_1.CreateUserWithRoleDto }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_user_with_role_dto_1.CreateUserWithRoleDto]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "createUser", null);
 exports.UsersController = UsersController = __decorate([
     (0, swagger_1.ApiTags)("Users"),
     (0, common_1.Controller)("users"),

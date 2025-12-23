@@ -9,41 +9,29 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateBookDto = void 0;
-const class_validator_1 = require("class-validator");
+exports.CreateUserWithRoleDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
-class CreateBookDto {
+const class_validator_1 = require("class-validator");
+class CreateUserWithRoleDto {
 }
-exports.CreateBookDto = CreateBookDto;
+exports.CreateUserWithRoleDto = CreateUserWithRoleDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: "john@example.com" }),
+    (0, class_validator_1.IsEmail)(),
+    __metadata("design:type", String)
+], CreateUserWithRoleDto.prototype, "email", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateBookDto.prototype, "title", void 0);
+], CreateUserWithRoleDto.prototype, "name", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateBookDto.prototype, "author", void 0);
+], CreateUserWithRoleDto.prototype, "password", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: "978-3-16-148410-0" }),
-    (0, class_validator_1.IsISBN)(),
-    __metadata("design:type", String)
-], CreateBookDto.prototype, "isbn", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)(),
+    (0, swagger_1.ApiProperty)({ enum: ["USER", "ADMIN"] }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateBookDto.prototype, "description", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ example: 2020 }),
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(1800),
-    (0, class_validator_1.Max)(2100),
-    __metadata("design:type", Number)
-], CreateBookDto.prototype, "publicationYear", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)(),
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], CreateBookDto.prototype, "genre", void 0);
+], CreateUserWithRoleDto.prototype, "role", void 0);

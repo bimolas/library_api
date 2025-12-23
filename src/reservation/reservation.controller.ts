@@ -7,10 +7,11 @@ import {
   Body,
   UseGuards,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody } from "@nestjs/swagger";
 import { ReservationService } from "./reservation.service";
-import type { CreateReservationDto } from "./dto/create-reservation.dto";
+import { CreateReservationDto } from "./dto/create-reservation.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { CurrentUser } from "@/auth/decorators/current-user.decorator";
 
 @ApiTags("Reservations")
 @Controller("reservations")
@@ -21,8 +22,9 @@ export class ReservationController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth("access-token")
   @ApiOperation({ summary: "Create a reservation" })
+  @ApiBody({ type: CreateReservationDto })
   async createReservation(
-    user: any,
+    @CurrentUser() user: any,
     @Body() createReservationDto: CreateReservationDto
   ) {
     return this.reservationService.createReservation(
@@ -59,7 +61,7 @@ export class ReservationController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth("access-token")
   @ApiOperation({ summary: "Get user reservations" })
-  async getUserReservations(user: any) {
+  async getUserReservations(@CurrentUser() user: any) {
     return this.reservationService.getUserReservations(user.userId);
   }
 }

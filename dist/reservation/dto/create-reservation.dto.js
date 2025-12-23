@@ -16,17 +16,17 @@ class CreateReservationDto {
 }
 exports.CreateReservationDto = CreateReservationDto;
 __decorate([
-    (0, swagger_1.ApiProperty)(),
+    (0, swagger_1.ApiProperty)({ example: "c76ded2c-059c-47b7-a75b-5a71ec9306cc", description: "ID of the book to reserve" }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateReservationDto.prototype, "bookId", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)(),
+    (0, swagger_1.ApiProperty)({ example: "2024-06-01", description: "Start date in ISO 8601 format" }),
     (0, class_validator_1.IsISO8601)(),
     __metadata("design:type", String)
 ], CreateReservationDto.prototype, "startDate", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)(),
+    (0, swagger_1.ApiProperty)({ example: 7, description: "Duration of the reservation in days" }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(1),
     __metadata("design:type", Number)

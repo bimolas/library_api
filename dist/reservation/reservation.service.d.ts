@@ -16,8 +16,25 @@ export declare class ReservationService {
         id: string;
         status: string;
     }>;
-    getReservationQueue(bookId: string): Promise<any>;
-    getUserReservations(userId: string): Promise<any>;
+    getReservationQueue(bookId: string): Promise<{
+        position: any;
+        reservationId: any;
+        userId: any;
+        userName: any;
+        priority: any;
+        startDate: any;
+        endDate: any;
+    }[]>;
+    getUserReservations(userId: string): Promise<{
+        id: any;
+        book: {
+            id: any;
+            title: any;
+        };
+        startDate: any;
+        endDate: any;
+        priority: any;
+    }[]>;
     getEarliestAvailableSlot(bookId: string): Promise<{
         availableFrom: any;
         message: string;

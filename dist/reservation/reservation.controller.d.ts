@@ -1,5 +1,5 @@
 import { ReservationService } from "./reservation.service";
-import type { CreateReservationDto } from "./dto/create-reservation.dto";
+import { CreateReservationDto } from "./dto/create-reservation.dto";
 export declare class ReservationController {
     private reservationService;
     constructor(reservationService: ReservationService);
@@ -14,10 +14,27 @@ export declare class ReservationController {
         id: string;
         status: string;
     }>;
-    getReservationQueue(bookId: string): Promise<any>;
+    getReservationQueue(bookId: string): Promise<{
+        position: any;
+        reservationId: any;
+        userId: any;
+        userName: any;
+        priority: any;
+        startDate: any;
+        endDate: any;
+    }[]>;
     getEarliestAvailableSlot(bookId: string): Promise<{
         availableFrom: any;
         message: string;
     }>;
-    getUserReservations(user: any): Promise<any>;
+    getUserReservations(user: any): Promise<{
+        id: any;
+        book: {
+            id: any;
+            title: any;
+        };
+        startDate: any;
+        endDate: any;
+        priority: any;
+    }[]>;
 }

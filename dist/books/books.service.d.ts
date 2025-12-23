@@ -29,7 +29,15 @@ export declare class BooksService {
         publicationYear: any;
         createdAt: any;
     }>;
-    searchBooks(query: string, limit?: number, skip?: number): Promise<any>;
+    searchBooks(query: string, limit?: number, skip?: number): Promise<{
+        id: any;
+        title: any;
+        author: any;
+        isbn: any;
+        description: any;
+        publicationYear: any;
+        createdAt: any;
+    }[]>;
     getAvailableCopies(bookId: string): Promise<any>;
     getBookCopyStatus(copyId: string): Promise<any>;
     private mapNeo4jToBook;

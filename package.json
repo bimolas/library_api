@@ -29,7 +29,7 @@
     "clsx": "2.1.1",
     "lucide-react": "0.561.0",
     "neo4j": "^2.0.0-alpha1",
-    "neo4j-driver": "^6.0.1",
+    "neo4j-driver": "^5.28.2",
     "next": "16.0.10",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",

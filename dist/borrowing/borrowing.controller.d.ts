@@ -1,5 +1,5 @@
 import { BorrowingService } from "./borrowing.service";
-import type { CreateBorrowDto } from "./dto/create-borrow.dto";
+import { CreateBorrowDto } from "./dto/create-borrow.dto";
 export declare class BorrowingController {
     private borrowingService;
     constructor(borrowingService: BorrowingService);
@@ -16,6 +16,25 @@ export declare class BorrowingController {
         returnDate: any;
         isOnTime: boolean;
     }>;
-    getUserBorrows(user: any): Promise<any>;
-    getOverdueBooks(user: any): Promise<any>;
+    getUserBorrows(user: any): Promise<{
+        id: any;
+        status: any;
+        borrowDate: any;
+        dueDate: any;
+        returnDate: any;
+        book: {
+            id: any;
+            title: any;
+        };
+        copy: {
+            id: any;
+            status: any;
+        };
+    }[]>;
+    getOverdueBooks(user: any): Promise<{
+        id: any;
+        book: any;
+        dueDate: any;
+        daysOverdue: number;
+    }[]>;
 }

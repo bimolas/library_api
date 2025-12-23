@@ -10,7 +10,7 @@ export class CreateBookDto {
   @IsString()
   author: string
 
-  @ApiProperty()
+  @ApiProperty({ example: "978-3-16-148410-0" })
   @IsISBN()
   isbn: string
 
@@ -18,7 +18,7 @@ export class CreateBookDto {
   @IsString()
   description: string
 
-  @ApiProperty()
+  @ApiProperty({ example: 2020 })
   @IsNumber()
   @Min(1800)
   @Max(2100)

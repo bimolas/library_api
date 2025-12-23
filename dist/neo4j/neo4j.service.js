@@ -1,60 +1,27 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Neo4jService = void 0;
 const common_1 = require("@nestjs/common");
-const neo4j = __importStar(require("neo4j-driver"));
+const neo4j_driver_1 = __importDefault(require("neo4j-driver"));
+const NEO4J_URI = process.env.NEO4J_URI || "neo4j://localhost:7687";
+const NEO4J_USER = process.env.NEO4J_USER || "neo4j";
+const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD || "password";
 let Neo4jService = class Neo4jService {
     async onModuleInit() {
-        const uri = process.env.NEO4J_URI || "neo4j+s://4c757ba2.databases.neo4j.io";
-        const user = process.env.NEO4J_USER || "neo4j";
-        const password = process.env.NEO4J_PASSWORD || "0dZ6dfI8v4osa_uuI_9X9qp04EvGToajdp2DHVAh3bw";
-        this.driver = neo4j.driver(uri, neo4j.auth.basic(user, password));
+        this.driver = neo4j_driver_1.default.driver(NEO4J_URI, neo4j_driver_1.default.auth.basic(NEO4J_USER, NEO4J_PASSWORD));
         this.session = this.driver.session();
         await this.verifyConnection();
         await this.initializeConstraints();
-    }
-    async onModuleDestroy() {
-        await this.session.close();
-        await this.driver.close();
+        console.log("✅ Connected to Neo4j (Docker)");
     }
     async verifyConnection() {
         try {
@@ -84,7 +51,26 @@ let Neo4jService = class Neo4jService {
     }
     async read(query, params = {}) {
         const session = this.driver.session({
-            defaultAccessMode: neo4j.session.READ,
+            defaultAccessMode: neo4j_driver_1.default.session.READ,
+        });
+        try {
+            const normalizedParams = { ...params };
+            if (normalizedParams.skip !== undefined && normalizedParams.skip !== null) {
+                normalizedParams.skip = neo4j_driver_1.default.int(Number(normalizedParams.skip));
+            }
+            if (normalizedParams.limit !== undefined && normalizedParams.limit !== null) {
+                normalizedParams.limit = neo4j_driver_1.default.int(Number(normalizedParams.limit));
+            }
+            const result = await session.run(query, normalizedParams);
+            return result;
+        }
+        finally {
+            await session.close();
+        }
+    }
+    async write(query, params = {}) {
+        const session = this.driver.session({
+            defaultAccessMode: neo4j_driver_1.default.session.WRITE,
         });
         try {
             return await session.run(query, params);
@@ -93,16 +79,12 @@ let Neo4jService = class Neo4jService {
             await session.close();
         }
     }
-    async write(query, params = {}) {
-        const session = this.driver.session({
-            defaultAccessMode: neo4j.session.WRITE,
-        });
-        try {
-            return await session.run(query, params);
-        }
-        finally {
-            await session.close();
-        }
+    async onModuleDestroy() {
+        await this.session.close();
+        await this.driver.close();
+    }
+    getDriver() {
+        return this.driver;
     }
 };
 exports.Neo4jService = Neo4jService;

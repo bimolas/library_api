@@ -20,7 +20,7 @@ let BooksService = class BooksService {
     async createBook(createBookDto) {
         const bookId = (0, crypto_1.randomUUID)();
         const query = `
-      MATCH (g:Genre { name: $genreName })
+       MERGE (g:Genre { name: $genreName })
       CREATE (b:Book {
         id: $bookId,
         title: $title,
@@ -42,9 +42,11 @@ let BooksService = class BooksService {
             publicationYear: createBookDto.publicationYear,
             genreName: createBookDto.genre,
         });
+        console.log("🚀 ~ BooksService ~ createBook ~ result:", result);
         return this.mapNeo4jToBook(result.records[0].get("b"));
     }
     async addBookCopy(bookId, quantity = 1) {
+        console.log("🚀 ~ BooksService ~ addBookCopy ~ quantity :", quantity);
         const copyIds = Array.from({ length: quantity }, () => (0, crypto_1.randomUUID)());
         for (const copyId of copyIds) {
             const query = `

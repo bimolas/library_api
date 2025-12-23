@@ -1,16 +1,30 @@
-import { Controller, Get, Post, Param, Query, UseGuards } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  UseGuards,
+  Body,
+} from "@nestjs/common";
 import {
   ApiTags,
   ApiOperation,
   ApiBearerAuth,
   ApiQuery,
+  ApiBody,
+  ApiProperty,
 } from "@nestjs/swagger";
 import { BooksService } from "./books.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { RoleGuard } from "../auth/guards/role.guard";
+import { CreateBookDto } from "./dto/create-book.dto";
+import { IsNumber, IsString } from "class-validator";
 
-interface AddCopiesDto {
+class AddCopiesDto {
+  @ApiProperty({ example: 2 })
+  @IsNumber()
   quantity: number;
 }
 
@@ -24,16 +38,22 @@ export class BooksController {
   @Roles("ADMIN")
   @ApiBearerAuth("access-token")
   @ApiOperation({ summary: "Create a new book (admin only)" })
-  async createBook(createBookDto: any) {
+  @ApiBody({
+    type: CreateBookDto,
+  })
+  async createBook(@Body() createBookDto: CreateBookDto) {
     return this.booksService.createBook(createBookDto);
   }
 
   @Post(":id/copies")
   @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles("ADMIN")
+  // @Roles("ADMIN")
   @ApiBearerAuth("access-token")
   @ApiOperation({ summary: "Add copies to a book (admin only)" })
-  async addCopies(@Param("id") bookId: string, body: AddCopiesDto) {
+  @ApiBody({
+    type: AddCopiesDto,
+  })
+  async addCopies(@Param("id") bookId: string, @Body() body: AddCopiesDto) {
     return this.booksService.addBookCopy(bookId, body.quantity);
   }
 

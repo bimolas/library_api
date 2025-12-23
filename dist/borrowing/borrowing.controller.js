@@ -16,6 +16,7 @@ exports.BorrowingController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const borrowing_service_1 = require("./borrowing.service");
+const create_borrow_dto_1 = require("./dto/create-borrow.dto");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const current_user_decorator_1 = require("../auth/decorators/current-user.decorator");
 let BorrowingController = class BorrowingController {
@@ -41,9 +42,11 @@ __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)("access-token"),
     (0, swagger_1.ApiOperation)({ summary: "Borrow a book" }),
+    (0, swagger_1.ApiBody)({ type: create_borrow_dto_1.CreateBorrowDto }),
+    __param(0, (0, common_1.Body)()),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Function, Object]),
+    __metadata("design:paramtypes", [create_borrow_dto_1.CreateBorrowDto, Object]),
     __metadata("design:returntype", Promise)
 ], BorrowingController.prototype, "borrowBook", null);
 __decorate([

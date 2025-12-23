@@ -1,7 +1,7 @@
-import { Controller, Post, Get, Param, UseGuards } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { Controller, Post, Get, Param, UseGuards, Body } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody } from "@nestjs/swagger";
 import { BorrowingService } from "./borrowing.service";
-import type { CreateBorrowDto } from "./dto/create-borrow.dto";
+import { CreateBorrowDto } from "./dto/create-borrow.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 
@@ -14,7 +14,8 @@ export class BorrowingController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth("access-token")
   @ApiOperation({ summary: "Borrow a book" })
-  async borrowBook(createBorrowDto: CreateBorrowDto, @CurrentUser() user: any) {
+  @ApiBody({ type: CreateBorrowDto })
+  async borrowBook(@Body() createBorrowDto: CreateBorrowDto, @CurrentUser() user: any) {
     return this.borrowingService.borrowBook(user.userId, createBorrowDto);
   }
 

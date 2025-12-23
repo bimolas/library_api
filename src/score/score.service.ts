@@ -52,27 +52,50 @@ export class ScoreService {
   }
 
   async getUserScore(userId: string) {
-    const query = `
+   const query = `
       MATCH (u:User { id: $userId })
       OPTIONAL MATCH (u)-[:HAS_SCORE_EVENT]->(se:ScoreEvent)
-      RETURN u.score as currentScore,
-             u.tier as tier,
-             COLLECT(se { id: se.id, type: se.type, points: se.points, createdAt: se.createdAt }) as events
+      WITH u, se
       ORDER BY se.createdAt DESC
+      WITH u, COLLECT(se { id: se.id, type: se.type, points: se.points, createdAt: se.createdAt }) AS events
+      RETURN u.score AS currentScore, u.tier AS tier, events
     `;
 
     const result = await this.neo4j.read(query, { userId });
-    const record = result.records[0];
 
+    const record = result.records[0];
+        console.log("🚀 ~ ScoreService ~ getUserScore ~ record:", record);
+const rawScore = record.get("currentScore");
+    const currentScore =
+      rawScore && typeof rawScore.toNumber === "function"
+        ? rawScore.toNumber()
+        : Number(rawScore) || 0;
+
+    const rawEvents = record.get("events") || [];
+    const events = Array.isArray(rawEvents)
+      ? rawEvents.map((ev: any) => ({
+          id: ev.id,
+          type: ev.type,
+          points:
+            ev && ev.points && typeof ev.points.toNumber === "function"
+              ? ev.points.toNumber()
+              : ev.points,
+          createdAt:
+            ev && ev.createdAt && typeof ev.createdAt.toString === "function"
+              ? ev.createdAt.toString()
+              : ev && ev.createdAt
+        }))
+      : [];
     return {
-      currentScore: record.get("currentScore").toNumber(),
+      currentScore,
       tier: record.get("tier"),
-      events: record.get("events"),
+      events,
     };
   }
 
   async getPrivileges(userId: string) {
     const scoreData = await this.getUserScore(userId);
+    console.log("🚀 ~ ScoreService ~ getPrivileges ~ userId:", userId);
     const score = scoreData.currentScore;
 
     return {

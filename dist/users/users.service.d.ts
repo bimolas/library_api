@@ -12,6 +12,15 @@ export declare class UsersService {
         tier: any;
         createdAt: any;
     }>;
+    createWithRole(createUserDto: any): Promise<{
+        id: any;
+        email: any;
+        name: any;
+        role: any;
+        score: any;
+        tier: any;
+        createdAt: any;
+    }>;
     findByEmail(email: string): Promise<{
         id: any;
         email: any;
@@ -41,7 +50,15 @@ export declare class UsersService {
         tier: any;
         createdAt: any;
     }>;
-    getAllUsers(limit?: number, skip?: number): Promise<any>;
+    getAllUsers(limit?: number, skip?: number): Promise<{
+        id: any;
+        email: any;
+        name: any;
+        role: any;
+        score: any;
+        tier: any;
+        createdAt: any;
+    }[]>;
     updateScore(userId: string, newScore: number): Promise<{
         id: any;
         email: any;

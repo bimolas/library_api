@@ -23,6 +23,7 @@ let BorrowingService = class BorrowingService {
     }
     async borrowBook(userId, createBorrowDto) {
         const borrowId = (0, uuid_1.v4)();
+        console.log("🚀 ~ BorrowingService ~ borrowBook ~ createBorrowDto:", createBorrowDto);
         const privileges = await this.scoreService.getPrivileges(userId);
         // Check user hasn't reached max concurrent borrows
         const activeBorrows = await this.getActiveBorrowCount(userId);

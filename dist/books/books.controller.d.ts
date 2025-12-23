@@ -1,11 +1,12 @@
 import { BooksService } from "./books.service";
-interface AddCopiesDto {
+import { CreateBookDto } from "./dto/create-book.dto";
+declare class AddCopiesDto {
     quantity: number;
 }
 export declare class BooksController {
     private booksService;
     constructor(booksService: BooksService);
-    createBook(createBookDto: any): Promise<{
+    createBook(createBookDto: CreateBookDto): Promise<{
         id: any;
         title: any;
         author: any;
@@ -18,7 +19,15 @@ export declare class BooksController {
         bookId: string;
         copiesTotalAdded: number;
     }>;
-    searchBooks(query: string, limit?: number, skip?: number): Promise<any>;
+    searchBooks(query: string, limit?: number, skip?: number): Promise<{
+        id: any;
+        title: any;
+        author: any;
+        isbn: any;
+        description: any;
+        publicationYear: any;
+        createdAt: any;
+    }[]>;
     getBook(id: string): Promise<{
         genre: any;
         totalCopies: any;

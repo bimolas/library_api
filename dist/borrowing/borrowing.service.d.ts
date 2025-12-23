@@ -20,7 +20,26 @@ export declare class BorrowingService {
         returnDate: any;
         isOnTime: boolean;
     }>;
-    getUserBorrows(userId: string, status?: string): Promise<any>;
+    getUserBorrows(userId: string, status?: string): Promise<{
+        id: any;
+        status: any;
+        borrowDate: any;
+        dueDate: any;
+        returnDate: any;
+        book: {
+            id: any;
+            title: any;
+        };
+        copy: {
+            id: any;
+            status: any;
+        };
+    }[]>;
     getActiveBorrowCount(userId: string): Promise<number>;
-    getOverdueBooks(userId: string): Promise<any>;
+    getOverdueBooks(userId: string): Promise<{
+        id: any;
+        book: any;
+        dueDate: any;
+        daysOverdue: number;
+    }[]>;
 }

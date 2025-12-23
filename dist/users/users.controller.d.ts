@@ -1,4 +1,5 @@
 import { UsersService } from "./users.service";
+import { CreateUserWithRoleDto } from "./dto/create-user-with-role.dto";
 export declare class UsersController {
     private usersService;
     constructor(usersService: UsersService);
@@ -22,5 +23,22 @@ export declare class UsersController {
         tier: any;
         createdAt: any;
     } | null>;
-    getAllUsers(): Promise<any>;
+    getAllUsers(): Promise<{
+        id: any;
+        email: any;
+        name: any;
+        role: any;
+        score: any;
+        tier: any;
+        createdAt: any;
+    }[]>;
+    createUser(createUserDto: CreateUserWithRoleDto): Promise<{
+        id: any;
+        email: any;
+        name: any;
+        role: any;
+        score: any;
+        tier: any;
+        createdAt: any;
+    }>;
 }

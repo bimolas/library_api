@@ -1,30 +1,23 @@
-import {
-  Injectable,
-  type OnModuleInit,
-  type OnModuleDestroy,
-} from "@nestjs/common";
-import * as neo4j from "neo4j-driver";
-
+import { Injectable, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
+import neo4j, { Driver } from "neo4j-driver";
+const NEO4J_URI = process.env.NEO4J_URI || "neo4j://localhost:7687";
+const NEO4J_USER = process.env.NEO4J_USER || "neo4j";
+const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD || "password";
 @Injectable()
 export class Neo4jService implements OnModuleInit, OnModuleDestroy {
-  private driver: any;
-  private session: any;
+  private driver: Driver;
+  session: any;
 
   async onModuleInit() {
-    const uri = process.env.NEO4J_URI || "neo4j+s://4c757ba2.databases.neo4j.io";
-    const user = process.env.NEO4J_USER || "neo4j";
-    const password = process.env.NEO4J_PASSWORD || "0dZ6dfI8v4osa_uuI_9X9qp04EvGToajdp2DHVAh3bw";
+    this.driver = neo4j.driver(
+      NEO4J_URI,
+      neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD)
+    );
 
-    this.driver = neo4j.driver(uri, neo4j.auth.basic(user, password));
     this.session = this.driver.session();
-
     await this.verifyConnection();
     await this.initializeConstraints();
-  }
-
-  async onModuleDestroy() {
-    await this.session.close();
-    await this.driver.close();
+    console.log("✅ Connected to Neo4j (Docker)");
   }
 
   private async verifyConnection() {
@@ -61,7 +54,15 @@ export class Neo4jService implements OnModuleInit, OnModuleDestroy {
       defaultAccessMode: neo4j.session.READ,
     });
     try {
-      return await session.run(query, params);
+       const normalizedParams = { ...params };
+      if (normalizedParams.skip !== undefined && normalizedParams.skip !== null) {
+        normalizedParams.skip = neo4j.int(Number(normalizedParams.skip));
+      }
+      if (normalizedParams.limit !== undefined && normalizedParams.limit !== null) {
+        normalizedParams.limit = neo4j.int(Number(normalizedParams.limit));
+      }
+      const result = await session.run(query, normalizedParams);
+      return result;
     } finally {
       await session.close();
     }
@@ -76,5 +77,14 @@ export class Neo4jService implements OnModuleInit, OnModuleDestroy {
     } finally {
       await session.close();
     }
+  }
+
+  async onModuleDestroy() {
+    await this.session.close();
+    await this.driver.close();
+  }
+
+  getDriver(): Driver {
+    return this.driver;
   }
 }
