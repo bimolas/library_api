@@ -69,9 +69,10 @@ let AuthService = class AuthService {
         if (!user) {
             throw new common_1.UnauthorizedException("Invalid credentials");
         }
-        console.log("🚀 ~ AuthService ~ signIn ~ user:", user);
+        if (user.role !== signInDto.role) {
+            throw new common_1.UnauthorizedException("Invalid credentials");
+        }
         const isPasswordValid = await bcrypt.compare(signInDto.password, user.password);
-        console.log("🚀 ~ AuthService ~ signIn ~ isPasswordValid:", isPasswordValid);
         if (!isPasswordValid) {
             throw new common_1.UnauthorizedException("Invalid credentials");
         }
@@ -102,6 +103,7 @@ let AuthService = class AuthService {
                 email: user.email,
                 name: user.name,
                 role: user.role,
+                imageUrl: user.imageUrl,
             },
         };
     }

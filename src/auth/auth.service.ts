@@ -12,10 +12,12 @@ import type { AuthPayload } from "./dto/auth-payload.dto";
 
 @Injectable()
 export class AuthService {
+  
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService
   ) {}
+
 
   async signUp(signUpDto: SignUpDto): Promise<AuthPayload> {
     const existing = await this.usersService.findByEmail(signUpDto.email);
@@ -37,12 +39,13 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException("Invalid credentials");
     }
-    console.log("🚀 ~ AuthService ~ signIn ~ user:", user );
+    if(user.role !== signInDto.role){
+      throw new UnauthorizedException("Invalid credentials");
+    }
     const isPasswordValid = await bcrypt.compare(
       signInDto.password,
       (user as any).password
     );
-    console.log("🚀 ~ AuthService ~ signIn ~ isPasswordValid:", isPasswordValid);
     if (!isPasswordValid) {
       throw new UnauthorizedException("Invalid credentials");
     }
@@ -76,6 +79,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
+        imageUrl: user.imageUrl,
       },
     };
   }

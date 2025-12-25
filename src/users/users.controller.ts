@@ -1,4 +1,15 @@
-import { Controller, Get, UseGuards, Param, Body, Post } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  UseGuards,
+  Param,
+  Body,
+  Post,
+  Put,
+  UploadedFile,
+  BadRequestException,
+  UseInterceptors,
+} from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody } from "@nestjs/swagger";
 import { UsersService } from "./users.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -7,9 +18,16 @@ import { Roles } from "../auth/decorators/roles.decorator";
 import { AuthenticatedUser } from "../utils/authenticated-user.decorator";
 import { CreateUserWithRoleDto } from "./dto/create-user-with-role.dto";
 import { SignInDto } from "@/auth/dto/sign-in.dto";
+import { UpdateUserDto } from "./dto/uipdate-user.dto";
+import  * as express from "express";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { extname } from "path";
+import { diskStorage } from "multer";
+const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 @ApiTags("Users")
 @Controller("users")
 export class UsersController {
+
   constructor(private usersService: UsersService) {}
 
   @Get("profile")
@@ -45,5 +63,35 @@ export class UsersController {
   @ApiBody({ type: CreateUserWithRoleDto })
   async createUser(@Body() createUserDto: CreateUserWithRoleDto) {
     return this.usersService.createWithRole(createUserDto);
+  }
+
+  @Put(":id")
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Update a user " })
+  @ApiBody({ type: UpdateUserDto })
+  @UseInterceptors(
+    FileInterceptor("file", {
+      storage: diskStorage({
+        destination: "./uploads",
+        filename: (_req, file, cb) => {
+          const unique = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}${extname(
+            file.originalname
+          )}`;
+          cb(null, unique);
+        },
+      }),
+    })
+  )
+  async updateUser(
+    @Param("id") id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @UploadedFile() file: any
+  ) {
+    if (!file) throw new BadRequestException("No file uploaded");
+    const avatarPath = `${BASE_URL}/uploads/${file.filename}`;
+
+    updateUserDto.imageUrl = avatarPath;
+    return this.usersService.updateUser(id, updateUserDto);
   }
 }

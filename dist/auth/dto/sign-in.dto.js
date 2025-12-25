@@ -25,3 +25,8 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], SignInDto.prototype, "password", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: "USER" }),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], SignInDto.prototype, "role", void 0);

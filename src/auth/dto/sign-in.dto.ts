@@ -9,4 +9,8 @@ export class SignInDto {
   @ApiProperty({ example: "SecurePassword123!" })
   @IsString()
   password: string
+
+  @ApiProperty({ example: "USER" })
+  @IsString()
+  role: string
 }

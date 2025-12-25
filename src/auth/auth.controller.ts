@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from "@nestjs/common";
+import { Body, Controller, Get, Post } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { SignUpDto } from "./dto/sign-up.dto";
@@ -33,4 +33,5 @@ export class AuthController {
   async refresh(@Body() body: { refreshToken: string }): Promise<AuthPayload> {
     return this.authService.refreshToken(body.refreshToken);
   }
+
 }

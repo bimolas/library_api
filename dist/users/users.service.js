@@ -51,6 +51,46 @@ let UsersService = class UsersService {
     constructor(neo4j) {
         this.neo4j = neo4j;
     }
+    async updateUser(id, updateUserDto) {
+        console.log("🚀 ~ UsersService ~ updateUser ~ updateUserDto:", updateUserDto);
+        const existingUser = await this.findById(id);
+        if (!existingUser) {
+            throw new common_1.BadRequestException("User not found");
+        }
+        const updates = [];
+        const params = { id };
+        if (updateUserDto.name) {
+            updates.push("u.name = $name");
+            params.name = updateUserDto.name;
+        }
+        if (updateUserDto.email) {
+            updates.push("u.email = $email");
+            params.email = updateUserDto.email;
+        }
+        if (updateUserDto.password) {
+            const hashedPassword = await bcrypt.hash(updateUserDto.password, 10);
+            updates.push("u.password = $password");
+            params.password = hashedPassword;
+        }
+        if (updateUserDto.imageUrl) {
+            updates.push("u.imageUrl = $imageUrl");
+            params.imageUrl = updateUserDto.imageUrl;
+        }
+        if (updateUserDto.role) {
+            updates.push("u.role = $role");
+            params.role = updateUserDto.role;
+        }
+        if (updates.length === 0) {
+            return existingUser;
+        }
+        const query = `
+      MATCH (u:User { id: $id })
+      SET ${updates.join(", ")}
+      RETURN u
+    `;
+        const result = await this.neo4j.write(query, params);
+        return this.mapNeo4jToUser(result.records[0].get("u"));
+    }
     async create(createUserDto) {
         const id = (0, uuid_1.v4)();
         const query = `
@@ -75,7 +115,6 @@ let UsersService = class UsersService {
         return this.mapNeo4jToUser(result.records[0].get("u"));
     }
     async createWithRole(createUserDto) {
-        console.log("🚀 ~ UsersService ~ createWithRole ~ createUserDto:", createUserDto);
         const existing = await this.findByEmail(createUserDto.email);
         if (existing) {
             throw new common_1.BadRequestException("Email already registered");
@@ -115,6 +154,7 @@ let UsersService = class UsersService {
             tier: node.properties.tier,
             createdAt: node.properties.createdAt,
             password: node.properties.password,
+            imageUrl: node.properties.imageUrl,
         });
         const result = await this.neo4j.read(query, { email });
         if (result.records.length === 0)
@@ -171,6 +211,7 @@ let UsersService = class UsersService {
         return this.mapNeo4jToUser(result.records[0].get("u"));
     }
     mapNeo4jToUser(node) {
+        console.log("🚀 ~ UsersService ~ mapNeo4jToUser ~ node:", node);
         return {
             id: node.properties.id,
             email: node.properties.email,
@@ -178,6 +219,7 @@ let UsersService = class UsersService {
             role: node.properties.role,
             score: node.properties.score,
             tier: node.properties.tier,
+            imageUrl: node.properties.imageUrl,
             createdAt: node.properties.createdAt,
         };
     }
