@@ -21,6 +21,8 @@ import { Roles } from "../auth/decorators/roles.decorator";
 import { RoleGuard } from "../auth/guards/role.guard";
 import { CreateBookDto } from "./dto/create-book.dto";
 import { IsNumber, IsString } from "class-validator";
+import { AuthenticatedUser } from "@/utils/authenticated-user.decorator";
+import { CreateCommentDto } from "./dto/Create-Comment.Dto";
 
 class AddCopiesDto {
   @ApiProperty({ example: 2 })
@@ -35,7 +37,7 @@ export class BooksController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles("ADMIN")
+  // @Roles("ADMIN")
   @ApiBearerAuth("access-token")
   @ApiOperation({ summary: "Create a new book (admin only)" })
   @ApiBody({
@@ -77,4 +79,25 @@ export class BooksController {
   async getBook(@Param("id") id: string) {
     return this.booksService.getBook(id);
   }
+
+
+  @Post(":id/comments")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Add a comment/review to a book" })
+  async addComment(
+    @Param("id") bookId: string,
+    @AuthenticatedUser() user: any,
+    @Body() body: CreateCommentDto
+  ) {
+    return this.booksService.createComment(bookId, user.userId, body.message, body.rating);
+  }
+
+   @Get(":id/comments")
+  @ApiOperation({ summary: "Get all comments for a book" })
+  async getComments(@Param("id") bookId: string) {
+    return this.booksService.getComments(bookId);
+  }
+
+
 }

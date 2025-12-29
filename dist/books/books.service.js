@@ -17,6 +17,63 @@ let BooksService = class BooksService {
     constructor(neo4j) {
         this.neo4j = neo4j;
     }
+    async getComments(bookId) {
+        const query = `
+      MATCH (b:Book { id: $bookId })<-[:ON]-(rev:Review)<-[:REVIEWED]-(u:User)
+      RETURN rev, u.name AS reviewerName, u.id AS reviewerId
+      ORDER BY rev.createdAt DESC
+    `;
+        const result = await this.neo4j.read(query, { bookId });
+        if (!result.records || result.records.length === 0)
+            return [];
+        return result.records.map((rec) => {
+            const node = rec.get("rev");
+            const reviewerName = rec.get("reviewerName");
+            const reviewerId = rec.get("reviewerId");
+            return {
+                id: node.properties.id,
+                message: node.properties.message,
+                rating: node.properties.rating,
+                reviewerName,
+                reviewerId,
+                createdAt: node.properties.createdAt && typeof node.properties.createdAt.toString === "function"
+                    ? node.properties.createdAt.toString()
+                    : node.properties.createdAt,
+            };
+        });
+    }
+    async createComment(bookId, userId, message, rating) {
+        const revId = (0, crypto_1.randomUUID)();
+        const query = `
+      MATCH (u:User { id: $userId }), (b:Book { id: $bookId })
+      CREATE (rev:Review {
+        id: $revId,
+        message: $message,
+        rating: $rating,
+        createdAt: datetime()
+      })
+      CREATE (u)-[:REVIEWED]->(rev)-[:ON]->(b)
+      RETURN rev, u.name AS reviewerName
+    `;
+        const params = { bookId, userId, revId, message, rating };
+        const result = await this.neo4j.write(query, params);
+        if (!result.records || result.records.length === 0) {
+            throw new common_1.NotFoundException("Book or user not found");
+        }
+        const rec = result.records[0];
+        const node = rec.get("rev");
+        const reviewerName = rec.get("reviewerName");
+        const review = {
+            id: node.properties.id,
+            message: node.properties.message,
+            rating: node.properties.rating,
+            reviewerName,
+            createdAt: node.properties.createdAt && typeof node.properties.createdAt.toString === "function"
+                ? node.properties.createdAt.toString()
+                : node.properties.createdAt,
+        };
+        return review;
+    }
     async createBook(createBookDto) {
         const bookId = (0, crypto_1.randomUUID)();
         const query = `
@@ -28,6 +85,10 @@ let BooksService = class BooksService {
         isbn: $isbn,
         description: $description,
         publicationYear: $publicationYear,
+        publisher: $publisher,
+        pages: $pages,
+        language: $language,
+        coverImage: $coverImage,
         createdAt: datetime()
       })
       CREATE (b)-[:BELONGS_TO]->(g)
@@ -41,12 +102,14 @@ let BooksService = class BooksService {
             description: createBookDto.description,
             publicationYear: createBookDto.publicationYear,
             genreName: createBookDto.genre,
+            publisher: createBookDto.publisher,
+            pages: createBookDto.pages,
+            language: createBookDto.language,
+            coverImage: createBookDto.coverImage,
         });
-        console.log("🚀 ~ BooksService ~ createBook ~ result:", result);
         return this.mapNeo4jToBook(result.records[0].get("b"));
     }
     async addBookCopy(bookId, quantity = 1) {
-        console.log("🚀 ~ BooksService ~ addBookCopy ~ quantity :", quantity);
         const copyIds = Array.from({ length: quantity }, () => (0, crypto_1.randomUUID)());
         for (const copyId of copyIds) {
             const query = `
@@ -92,11 +155,23 @@ let BooksService = class BooksService {
     async searchBooks(query, limit = 20, skip = 0) {
         const searchQuery = `
       MATCH (b:Book)
-      WHERE 
-        b.title CONTAINS $query OR 
-        b.author CONTAINS $query OR 
-        b.isbn CONTAINS $query
-      RETURN b
+      OPTIONAL MATCH (b)-[:BELONGS_TO]->(g:Genre)
+      OPTIONAL MATCH (b)-[:HAS_COPY]->(bc:BookCopy)
+      WHERE
+      b.title CONTAINS $query OR
+      b.author CONTAINS $query OR
+      b.isbn CONTAINS $query OR
+      (g.name IS NOT NULL AND g.name CONTAINS $query)
+      WITH b, g, COLLECT(bc) AS copies
+      RETURN {
+      properties: b {
+        .*, 
+        genre: g.name, 
+        totalCopies: size(copies), 
+        availableCopies: size([c IN copies WHERE c.status = 'AVAILABLE']),
+        copies: [c IN copies | { id: c.id, status: c.status }]
+      }
+      } AS b
       SKIP $skip
       LIMIT $limit
     `;
@@ -130,7 +205,15 @@ let BooksService = class BooksService {
             isbn: node.properties.isbn,
             description: node.properties.description,
             publicationYear: node.properties.publicationYear,
-            createdAt: node.properties.createdAt,
+            genre: node.properties.genre,
+            publisher: node.properties.publisher,
+            pages: node.properties.pages,
+            language: node.properties.language,
+            coverImage: node.properties.coverImage,
+            createdAt: new Date(node.properties.createdAt),
+            totalCopies: node.properties?.copies?.length,
+            availableCopies: node.properties?.copies ? node.properties.copies.filter((c) => c.status === "AVAILABLE").length : 0,
+            copies: node.properties?.copies || [],
         };
     }
 };

@@ -32,9 +32,16 @@ export declare class ReservationController {
         book: {
             id: any;
             title: any;
+            author: any;
+            isbn: any;
+            description: any;
+            publicationYear: any;
+            genre: any;
         };
         startDate: any;
         endDate: any;
         priority: any;
+        status: any;
+        durationDays: number;
     }[]>;
 }

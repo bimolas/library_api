@@ -5,4 +5,8 @@ export declare class CreateBookDto {
     description: string;
     publicationYear: number;
     genre: string;
+    coverImage?: string;
+    publisher: string;
+    pages: number;
+    language: string;
 }

@@ -103,10 +103,19 @@ let ReservationService = class ReservationService {
             book: {
                 id: r.get("b").properties.id,
                 title: r.get("b").properties.title,
+                author: r.get("b").properties.author,
+                isbn: r.get("b").properties.isbn,
+                description: r.get("b").properties.description,
+                publicationYear: r.get("b").properties.publicationYear,
+                genre: r.get("b").properties.genre,
             },
             startDate: r.get("r").properties.startDate,
             endDate: r.get("r").properties.endDate,
             priority: r.get("r").properties.priority,
+            status: r.get("r").properties.status,
+            durationDays: Math.ceil((new Date(r.get("r").properties.endDate).getTime() -
+                new Date(r.get("r").properties.startDate).getTime()) /
+                (1000 * 60 * 60 * 24)),
         }));
     }
     async getEarliestAvailableSlot(bookId) {

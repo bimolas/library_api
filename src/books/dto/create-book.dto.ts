@@ -1,12 +1,12 @@
-import { IsString, IsISBN, IsNumber, Min, Max } from "class-validator"
+import { IsString, IsISBN, IsNumber, Min, Max, IsOptional } from "class-validator"
 import { ApiProperty } from "@nestjs/swagger"
 
 export class CreateBookDto {
-  @ApiProperty()
+  @ApiProperty({ example: "Harry Potter and the Philosopher's Stone" })
   @IsString()
   title: string
 
-  @ApiProperty()
+  @ApiProperty({ example: "J.K. Rowling" })
   @IsString()
   author: string
 
@@ -24,7 +24,24 @@ export class CreateBookDto {
   @Max(2100)
   publicationYear: number
 
-  @ApiProperty()
+  @ApiProperty({ example: "Fantasy" })
   @IsString()
   genre: string
+
+  @ApiProperty({ example: "https://example.com/cover.jpg" })
+  @IsString()
+  @IsOptional()
+  coverImage?: string
+
+  @ApiProperty({ example: "Penguin Random House" })
+  @IsString()
+  publisher: string
+
+  @ApiProperty({ example: 350 })
+  @IsNumber()
+  pages: number
+
+  @ApiProperty({ example: "English" })
+  @IsString()
+  language: string
 }

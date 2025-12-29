@@ -25,6 +25,7 @@ export declare class BorrowingController {
         book: {
             id: any;
             title: any;
+            author: any;
         };
         copy: {
             id: any;

@@ -29,6 +29,7 @@ export declare class BorrowingService {
         book: {
             id: any;
             title: any;
+            author: any;
         };
         copy: {
             id: any;

@@ -1,5 +1,6 @@
 import { BooksService } from "./books.service";
 import { CreateBookDto } from "./dto/create-book.dto";
+import { CreateCommentDto } from "./dto/Create-Comment.Dto";
 declare class AddCopiesDto {
     quantity: number;
 }
@@ -13,7 +14,15 @@ export declare class BooksController {
         isbn: any;
         description: any;
         publicationYear: any;
-        createdAt: any;
+        genre: any;
+        publisher: any;
+        pages: any;
+        language: any;
+        coverImage: any;
+        createdAt: Date;
+        totalCopies: any;
+        availableCopies: any;
+        copies: any;
     }>;
     addCopies(bookId: string, body: AddCopiesDto): Promise<{
         bookId: string;
@@ -26,7 +35,15 @@ export declare class BooksController {
         isbn: any;
         description: any;
         publicationYear: any;
-        createdAt: any;
+        genre: any;
+        publisher: any;
+        pages: any;
+        language: any;
+        coverImage: any;
+        createdAt: Date;
+        totalCopies: any;
+        availableCopies: any;
+        copies: any;
     }[]>;
     getBook(id: string): Promise<{
         genre: any;
@@ -39,7 +56,26 @@ export declare class BooksController {
         isbn: any;
         description: any;
         publicationYear: any;
+        publisher: any;
+        pages: any;
+        language: any;
+        coverImage: any;
+        createdAt: Date;
+    }>;
+    addComment(bookId: string, user: any, body: CreateCommentDto): Promise<{
+        id: any;
+        message: any;
+        rating: any;
+        reviewerName: any;
         createdAt: any;
     }>;
+    getComments(bookId: string): Promise<{
+        id: any;
+        message: any;
+        rating: any;
+        reviewerName: any;
+        reviewerId: any;
+        createdAt: any;
+    }[]>;
 }
 export {};

@@ -17,10 +17,11 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const books_service_1 = require("./books.service");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
-const roles_decorator_1 = require("../auth/decorators/roles.decorator");
 const role_guard_1 = require("../auth/guards/role.guard");
 const create_book_dto_1 = require("./dto/create-book.dto");
 const class_validator_1 = require("class-validator");
+const authenticated_user_decorator_1 = require("../utils/authenticated-user.decorator");
+const Create_Comment_Dto_1 = require("./dto/Create-Comment.Dto");
 class AddCopiesDto {
 }
 __decorate([
@@ -44,12 +45,19 @@ let BooksController = class BooksController {
     async getBook(id) {
         return this.booksService.getBook(id);
     }
+    async addComment(bookId, user, body) {
+        return this.booksService.createComment(bookId, user.userId, body.message, body.rating);
+    }
+    async getComments(bookId) {
+        return this.booksService.getComments(bookId);
+    }
 };
 exports.BooksController = BooksController;
 __decorate([
     (0, common_1.Post)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, role_guard_1.RoleGuard),
-    (0, roles_decorator_1.Roles)("ADMIN"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, role_guard_1.RoleGuard)
+    // @Roles("ADMIN")
+    ,
     (0, swagger_1.ApiBearerAuth)("access-token"),
     (0, swagger_1.ApiOperation)({ summary: "Create a new book (admin only)" }),
     (0, swagger_1.ApiBody)({
@@ -99,6 +107,26 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], BooksController.prototype, "getBook", null);
+__decorate([
+    (0, common_1.Post)(":id/comments"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)("access-token"),
+    (0, swagger_1.ApiOperation)({ summary: "Add a comment/review to a book" }),
+    __param(0, (0, common_1.Param)("id")),
+    __param(1, (0, authenticated_user_decorator_1.AuthenticatedUser)()),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Create_Comment_Dto_1.CreateCommentDto]),
+    __metadata("design:returntype", Promise)
+], BooksController.prototype, "addComment", null);
+__decorate([
+    (0, common_1.Get)(":id/comments"),
+    (0, swagger_1.ApiOperation)({ summary: "Get all comments for a book" }),
+    __param(0, (0, common_1.Param)("id")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], BooksController.prototype, "getComments", null);
 exports.BooksController = BooksController = __decorate([
     (0, swagger_1.ApiTags)("Books"),
     (0, common_1.Controller)("books"),
