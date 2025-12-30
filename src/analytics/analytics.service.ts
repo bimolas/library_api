@@ -4,20 +4,27 @@ import { Neo4jService } from "../neo4j/neo4j.service";
 @Injectable()
 export class AnalyticsService {
   constructor(private neo4j: Neo4jService) {}
-
-  async getUserAnalytics(userId: string) {
+ async getUserAnalytics(userId: string) {
     const query = `
       MATCH (u:User { id: $userId })
       OPTIONAL MATCH (u)-[:BORROWED]->(b:Borrow)
       OPTIONAL MATCH (u)-[:RESERVED]->(r:Reservation)
       OPTIONAL MATCH (u)-[:REVIEWED]->(rev:Review)-[:ON]->(book:Book)-[:BELONGS_TO]->(g:Genre)
       OPTIONAL MATCH (u)-[:HAS_SCORE_EVENT]->(se:ScoreEvent)
-      WITH u, u.score AS currentScore, u.tier AS tier,
+      WITH u,
+           u.score AS currentScore,
+           u.tier AS tier,
+           u.createdAt AS createdAt,
+           (CASE WHEN u.name IS NOT NULL THEN 1 ELSE 0 END +
+            CASE WHEN u.email IS NOT NULL THEN 1 ELSE 0 END +
+            CASE WHEN u.imageUrl IS NOT NULL THEN 1 ELSE 0 END) AS filledFields,
            COUNT(DISTINCT b) AS borrowCount,
            COUNT(DISTINCT r) AS reservationCount,
            COUNT(DISTINCT rev) AS reviewCount,
            COLLECT(DISTINCT g.name) AS genresRead,
            COUNT(DISTINCT se) AS totalScoreEvents
+      WITH u, currentScore, tier, createdAt, borrowCount, reservationCount, reviewCount, genresRead, totalScoreEvents, filledFields,
+           CASE WHEN 3 > 0 THEN toFloat(filledFields) / 3.0 * 100.0 ELSE 0 END AS progress
       RETURN {
         borrowCount: borrowCount,
         reservationCount: reservationCount,
@@ -25,7 +32,9 @@ export class AnalyticsService {
         genresRead: genresRead,
         totalScoreEvents: totalScoreEvents,
         currentScore: currentScore,
-        tier: tier
+        tier: tier,
+        createdAt: createdAt,
+        progress: progress
       } as analytics
     `;
 
@@ -39,6 +48,8 @@ export class AnalyticsService {
         totalScoreEvents: 0,
         currentScore: 0,
         tier: null,
+        createdAt: null,
+        progress: 0,
       };
     }
 
@@ -67,6 +78,14 @@ export class AnalyticsService {
           ? raw.currentScore.toNumber()
           : raw.currentScore ?? 0,
       tier: raw.tier ?? null,
+      createdAt:
+        raw.createdAt && typeof raw.createdAt.toString === "function"
+          ? raw.createdAt.toString()
+          : raw.createdAt ?? null,
+      progress:
+        raw.progress && typeof raw.progress.toNumber === "function"
+          ? raw.progress.toNumber()
+          : Number(raw.progress) || 0,
     };
   }
 
@@ -136,18 +155,37 @@ export class AnalyticsService {
 
   async getGenreDistribution(userId: string) {
     const query = `
-      MATCH (u:User { id: $userId })-[:BORROWED]->(b:Borrow)-[:OF_COPY]->(bc:BookCopy)<-[:HAS_COPY]-(book:Book)-[:BELONGS_TO]->(g:Genre)
-      RETURN g.name as genre, COUNT(DISTINCT b) as count
+      MATCH (user:User { id: $userId })-[:BORROWED]->(b:Borrow)-[:OF_COPY]->(bc:BookCopy)<-[:HAS_COPY]-(book:Book)-[:BELONGS_TO]->(g:Genre)
+      OPTIONAL MATCH (user)-[:REVIEWED]->(rev:Review)-[:ON]->(book)
+      WITH g.name AS genre, COUNT(DISTINCT b) AS borrowCount, SUM(COALESCE(rev.rating, 0)) AS totalScore
+      RETURN genre, borrowCount AS count, totalScore
       ORDER BY count DESC
     `;
 
     const result = await this.neo4j.read(query, { userId });
-    return result.records.map((r: any) => ({
-      genre: r.get("genre"),
-      count: r.get("count").toNumber(),
-    }));
-  }
 
+    return result.records.map((r: any) => {
+      const rawCount = r.get("count");
+      const count =
+        rawCount && typeof rawCount.toNumber === "function"
+          ? rawCount.toNumber()
+          : Number(rawCount) || 0;
+
+      const rawTotal = r.get("totalScore");
+      const totalScore =
+        rawTotal && typeof rawTotal.toNumber === "function"
+          ? rawTotal.toNumber()
+          : rawTotal !== undefined && rawTotal !== null
+          ? Number(rawTotal)
+          : 0;
+
+      return {
+        genre: r.get("genre"),
+        count,
+        score: totalScore,
+      };
+    });
+  }
   async getLateReturnStatistics() {
     const query = `
       MATCH (b:Borrow { status: 'COMPLETED' })

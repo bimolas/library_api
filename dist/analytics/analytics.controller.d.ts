@@ -10,6 +10,8 @@ export declare class AnalyticsController {
         totalScoreEvents: any;
         currentScore: any;
         tier: any;
+        createdAt: any;
+        progress: any;
     }>;
     getTrendingBooks(): Promise<any[]>;
     getMostReservedBooks(): Promise<any[]>;
@@ -17,6 +19,7 @@ export declare class AnalyticsController {
     getGenreDistribution(userId: string): Promise<{
         genre: any;
         count: any;
+        score: any;
     }[]>;
     getLateReturnStatistics(): Promise<any>;
 }
