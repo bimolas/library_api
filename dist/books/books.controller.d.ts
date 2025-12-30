@@ -19,10 +19,13 @@ export declare class BooksController {
         pages: any;
         language: any;
         coverImage: any;
-        createdAt: Date;
+        createdAt: Date | null;
         totalCopies: any;
         availableCopies: any;
         copies: any;
+        rating: number;
+        borrowCount: any;
+        reviewCount: any;
     }>;
     addCopies(bookId: string, body: AddCopiesDto): Promise<{
         bookId: string;
@@ -40,10 +43,13 @@ export declare class BooksController {
         pages: any;
         language: any;
         coverImage: any;
-        createdAt: Date;
+        createdAt: Date | null;
         totalCopies: any;
         availableCopies: any;
         copies: any;
+        rating: number;
+        borrowCount: any;
+        reviewCount: any;
     }[]>;
     getBook(id: string): Promise<{
         genre: any;
@@ -60,7 +66,10 @@ export declare class BooksController {
         pages: any;
         language: any;
         coverImage: any;
-        createdAt: Date;
+        createdAt: Date | null;
+        rating: number;
+        borrowCount: any;
+        reviewCount: any;
     }>;
     addComment(bookId: string, user: any, body: CreateCommentDto): Promise<{
         id: any;

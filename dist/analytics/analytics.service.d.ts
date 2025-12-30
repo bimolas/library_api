@@ -13,13 +13,35 @@ export declare class AnalyticsService {
         createdAt: any;
         progress: any;
     }>;
-    getTrendingBooks(limit?: number): Promise<any[]>;
+    getTrendingBooks(limit?: number): Promise<{
+        id: any;
+        title: any;
+        author: any;
+        borrowCount: any;
+        avgRating: any;
+        reviewCount: any;
+        genre: any;
+    }[]>;
     getMostReservedBooks(limit?: number): Promise<any[]>;
     getDemandVsSupply(): Promise<any[]>;
     getGenreDistribution(userId: string): Promise<{
         genre: any;
         count: any;
         score: any;
+    }[]>;
+    getRecommendations(userId: string, limit?: number): Promise<{
+        id: any;
+        title: any;
+        author: any;
+        description: any;
+        publicationYear: any;
+        genres: any;
+        genre: any;
+        popularity: any;
+        totalCopies: any;
+        availableCopies: any;
+        rating: any;
+        demandPressure: any;
     }[]>;
     getLateReturnStatistics(): Promise<any>;
 }

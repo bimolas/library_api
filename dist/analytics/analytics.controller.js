@@ -20,6 +20,7 @@ const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const role_guard_1 = require("../auth/guards/role.guard");
 const roles_decorator_1 = require("../auth/decorators/roles.decorator");
 const current_user_decorator_1 = require("../auth/decorators/current-user.decorator");
+const authenticated_user_decorator_1 = require("../utils/authenticated-user.decorator");
 let AnalyticsController = class AnalyticsController {
     constructor(analyticsService) {
         this.analyticsService = analyticsService;
@@ -41,6 +42,9 @@ let AnalyticsController = class AnalyticsController {
     }
     async getLateReturnStatistics() {
         return this.analyticsService.getLateReturnStatistics();
+    }
+    async getRecommendations(user, limit = 10) {
+        return this.analyticsService.getRecommendations(user.userId, Number(limit));
     }
 };
 exports.AnalyticsController = AnalyticsController;
@@ -102,6 +106,17 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getLateReturnStatistics", null);
+__decorate([
+    (0, common_1.Get)("user/recommendations"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)("access-token"),
+    (0, swagger_1.ApiOperation)({ summary: "Get recommended books for a user" }),
+    __param(0, (0, authenticated_user_decorator_1.AuthenticatedUser)()),
+    __param(1, (0, common_1.Query)("limit")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getRecommendations", null);
 exports.AnalyticsController = AnalyticsController = __decorate([
     (0, swagger_1.ApiTags)("Analytics"),
     (0, common_1.Controller)("analytics"),

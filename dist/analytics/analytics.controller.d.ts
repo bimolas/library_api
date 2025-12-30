@@ -13,7 +13,15 @@ export declare class AnalyticsController {
         createdAt: any;
         progress: any;
     }>;
-    getTrendingBooks(): Promise<any[]>;
+    getTrendingBooks(): Promise<{
+        id: any;
+        title: any;
+        author: any;
+        borrowCount: any;
+        avgRating: any;
+        reviewCount: any;
+        genre: any;
+    }[]>;
     getMostReservedBooks(): Promise<any[]>;
     getDemandVsSupply(): Promise<any[]>;
     getGenreDistribution(userId: string): Promise<{
@@ -22,4 +30,18 @@ export declare class AnalyticsController {
         score: any;
     }[]>;
     getLateReturnStatistics(): Promise<any>;
+    getRecommendations(user: any, limit?: number): Promise<{
+        id: any;
+        title: any;
+        author: any;
+        description: any;
+        publicationYear: any;
+        genres: any;
+        genre: any;
+        popularity: any;
+        totalCopies: any;
+        availableCopies: any;
+        rating: any;
+        demandPressure: any;
+    }[]>;
 }

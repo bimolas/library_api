@@ -1,10 +1,11 @@
-import { Controller, Get, UseGuards, Param } from "@nestjs/common";
+import { Controller, Get, UseGuards, Param, Query } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { AnalyticsService } from "./analytics.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { RoleGuard } from "../auth/guards/role.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { CurrentUser } from "@/auth/decorators/current-user.decorator";
+import { AuthenticatedUser } from "@/utils/authenticated-user.decorator";
 
 @ApiTags("Analytics")
 @Controller("analytics")
@@ -59,5 +60,13 @@ export class AnalyticsController {
   @ApiOperation({ summary: "Get late return statistics (admin only)" })
   async getLateReturnStatistics() {
     return this.analyticsService.getLateReturnStatistics();
+  }
+
+  @Get("user/recommendations")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Get recommended books for a user" })
+  async getRecommendations(@AuthenticatedUser() user: any, @Query("limit") limit = 10) {
+    return this.analyticsService.getRecommendations(user.userId, Number(limit));
   }
 }

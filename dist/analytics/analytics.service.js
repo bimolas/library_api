@@ -92,23 +92,52 @@ let AnalyticsService = class AnalyticsService {
     }
     async getTrendingBooks(limit = 10) {
         const query = `
-      MATCH (book:Book)<-[:OF_COPY]-(:BookCopy)<-[:OF_COPY]-(b:Borrow)
-      WITH book, COUNT(b) as borrowCount
-      MATCH (book)<-[:ON]-(rev:Review)
-      WITH book, borrowCount, AVG(rev.rating) as avgRating, COUNT(rev) as reviewCount
+      MATCH (book:Book)-[:HAS_COPY]->(bc:BookCopy)
+      OPTIONAL MATCH (bc)<-[:OF_COPY]-(br:Borrow)
+      OPTIONAL MATCH (book)<-[:ON]-(rev:Review)<-[:REVIEWED]-(u:User)
+      OPTIONAL MATCH (book)-[:BELONGS_TO]->(g:Genre)
+      WITH book,
+           COUNT(DISTINCT br) AS borrowCount,            // number of times this book was borrowed
+           AVG(rev.rating) AS avgRating,
+           COUNT(DISTINCT u.id) AS reviewCount,         // number of distinct users who reviewed the book
+           head(COLLECT(DISTINCT g.name)) AS genre
       RETURN {
         id: book.id,
         title: book.title,
         author: book.author,
         borrowCount: borrowCount,
         avgRating: avgRating,
-        reviewCount: reviewCount
-      } as bookStats
+        reviewCount: reviewCount,
+        genre: genre
+      } AS bookStats
       ORDER BY borrowCount DESC
       LIMIT $limit
     `;
         const result = await this.neo4j.read(query, { limit });
-        return result.records.map((r) => r.get("bookStats"));
+        return result.records.map((rec) => {
+            const s = rec.get("bookStats") || {};
+            const rawBorrow = s.borrowCount;
+            const rawReviewCount = s.reviewCount;
+            const rawAvg = s.avgRating;
+            const genre = s.genre ?? null;
+            return {
+                id: s.id,
+                title: s.title,
+                author: s.author,
+                borrowCount: rawBorrow && typeof rawBorrow.toNumber === "function"
+                    ? rawBorrow.toNumber()
+                    : Number(rawBorrow) || 0,
+                avgRating: rawAvg === null || rawAvg === undefined
+                    ? null
+                    : typeof rawAvg.toNumber === "function"
+                        ? rawAvg.toNumber()
+                        : Number(rawAvg),
+                reviewCount: rawReviewCount && typeof rawReviewCount.toNumber === "function"
+                    ? rawReviewCount.toNumber()
+                    : Number(rawReviewCount) || 0,
+                genre,
+            };
+        });
     }
     async getMostReservedBooks(limit = 10) {
         const query = `
@@ -175,6 +204,94 @@ let AnalyticsService = class AnalyticsService {
             };
         });
     }
+    // ...existing code...
+    async getRecommendations(userId, limit = 10) {
+        const query = `
+      MATCH (u:User { id: $userId })
+      OPTIONAL MATCH (u)-[:BORROWED]->(:Borrow)-[:OF_COPY]->(:BookCopy)<-[:HAS_COPY]-(ub:Book)
+      WITH COLLECT(DISTINCT ub.id) AS userBookIds
+
+      MATCH (u2:User { id: $userId })-[:BORROWED]->(:Borrow)-[:OF_COPY]->(:BookCopy)<-[:HAS_COPY]-(b)-[:BELONGS_TO]->(g:Genre)
+      WITH userBookIds, g.name AS genreName, COUNT(*) AS genreCount
+      ORDER BY genreCount DESC
+      LIMIT 3
+      WITH userBookIds, COLLECT(genreName) AS topGenres
+
+      MATCH (candidate:Book)-[:BELONGS_TO]->(g2:Genre)
+      WHERE g2.name IN topGenres AND NOT candidate.id IN userBookIds
+
+      OPTIONAL MATCH (candidate)-[:HAS_COPY]->(bc:BookCopy)
+      OPTIONAL MATCH (bc)<-[:OF_COPY]-(brAll:Borrow)
+      OPTIONAL MATCH (bc)<-[:OF_COPY]-(brActive:Borrow { status: 'ACTIVE' })
+      OPTIONAL MATCH (candidate)<-[:OF_BOOK]-(res:Reservation { status: 'ACTIVE' })
+      OPTIONAL MATCH (candidate)<-[:ON]-(rev:Review)
+
+      WITH candidate, g2,
+           COUNT(DISTINCT brAll) AS popularity,
+           COUNT(DISTINCT bc) AS totalCopies,
+           COUNT(DISTINCT brActive) AS borrowedCopies,
+           COUNT(DISTINCT res) AS activeReservations,
+           AVG(rev.rating) AS avgRating
+
+      // collect genres for the candidate (usually single) and aggregate
+      WITH candidate, COLLECT(DISTINCT g2.name) AS genres, popularity, totalCopies, borrowedCopies, activeReservations, avgRating
+      RETURN candidate { .id, .title, .author, .description, .publicationYear } AS book,
+             genres,
+             popularity,
+             totalCopies,
+             (totalCopies - borrowedCopies) AS availableCopies,
+             avgRating,
+             CASE WHEN totalCopies > 0 THEN ROUND((toFloat(borrowedCopies) + toFloat(activeReservations)) / toFloat(totalCopies) * 100.0, 2) ELSE 0 END AS demandPressure
+      ORDER BY popularity DESC
+      LIMIT $limit
+    `;
+        const result = await this.neo4j.read(query, { userId, limit });
+        if (!result.records || result.records.length === 0)
+            return [];
+        return result.records.map((rec) => {
+            const bookObj = rec.get("book") || {};
+            const rawPopularity = rec.get("popularity");
+            const rawTotalCopies = rec.get("totalCopies");
+            const rawAvailable = rec.get("availableCopies");
+            const rawAvg = rec.get("avgRating");
+            const rawDemand = rec.get("demandPressure");
+            const genres = rec.get("genres") || [];
+            const popularity = rawPopularity && typeof rawPopularity.toNumber === "function"
+                ? rawPopularity.toNumber()
+                : Number(rawPopularity) || 0;
+            const totalCopies = rawTotalCopies && typeof rawTotalCopies.toNumber === "function"
+                ? rawTotalCopies.toNumber()
+                : Number(rawTotalCopies) || 0;
+            const availableCopies = rawAvailable && typeof rawAvailable.toNumber === "function"
+                ? rawAvailable.toNumber()
+                : Number(rawAvailable) || 0;
+            const avgRating = rawAvg === null || rawAvg === undefined
+                ? null
+                : typeof rawAvg.toNumber === "function"
+                    ? rawAvg.toNumber()
+                    : Number(rawAvg);
+            const demandPressure = rawDemand === null || rawDemand === undefined
+                ? 0
+                : typeof rawDemand.toNumber === "function"
+                    ? rawDemand.toNumber()
+                    : Number(rawDemand);
+            return {
+                id: bookObj.id,
+                title: bookObj.title,
+                author: bookObj.author,
+                description: bookObj.description,
+                publicationYear: bookObj.publicationYear,
+                genres, // array of genre names (usually one)
+                genre: Array.isArray(genres) && genres.length > 0 ? genres[0] : null,
+                popularity,
+                totalCopies,
+                availableCopies,
+                rating: avgRating,
+                demandPressure, // percentage (0-100) rounded to 2 decimals
+            };
+        });
+    }
+    // ...existing code...
     async getLateReturnStatistics() {
         const query = `
       MATCH (b:Borrow { status: 'COMPLETED' })

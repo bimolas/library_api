@@ -30,10 +30,13 @@ export declare class BooksService {
         pages: any;
         language: any;
         coverImage: any;
-        createdAt: Date;
+        createdAt: Date | null;
         totalCopies: any;
         availableCopies: any;
         copies: any;
+        rating: number;
+        borrowCount: any;
+        reviewCount: any;
     }>;
     addBookCopy(bookId: string, quantity?: number): Promise<{
         bookId: string;
@@ -54,7 +57,10 @@ export declare class BooksService {
         pages: any;
         language: any;
         coverImage: any;
-        createdAt: Date;
+        createdAt: Date | null;
+        rating: number;
+        borrowCount: any;
+        reviewCount: any;
     }>;
     searchBooks(query: string, limit?: number, skip?: number): Promise<{
         id: any;
@@ -68,10 +74,13 @@ export declare class BooksService {
         pages: any;
         language: any;
         coverImage: any;
-        createdAt: Date;
+        createdAt: Date | null;
         totalCopies: any;
         availableCopies: any;
         copies: any;
+        rating: number;
+        borrowCount: any;
+        reviewCount: any;
     }[]>;
     getAvailableCopies(bookId: string): Promise<any>;
     getBookCopyStatus(copyId: string): Promise<any>;

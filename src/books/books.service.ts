@@ -5,10 +5,9 @@ import { randomUUID as uuid } from "crypto";
 
 @Injectable()
 export class BooksService {
- 
   constructor(private neo4j: Neo4jService) {}
 
-   async getComments(bookId: string) {
+  async getComments(bookId: string) {
     const query = `
       MATCH (b:Book { id: $bookId })<-[:ON]-(rev:Review)<-[:REVIEWED]-(u:User)
       RETURN rev, u.name AS reviewerName, u.id AS reviewerId
@@ -29,15 +28,20 @@ export class BooksService {
         reviewerName,
         reviewerId,
         createdAt:
-          node.properties.createdAt && typeof node.properties.createdAt.toString === "function"
+          node.properties.createdAt &&
+          typeof node.properties.createdAt.toString === "function"
             ? node.properties.createdAt.toString()
             : node.properties.createdAt,
       };
     });
   }
 
-
-  async createComment(bookId: string, userId: string, message: string, rating: number) {
+  async createComment(
+    bookId: string,
+    userId: string,
+    message: string,
+    rating: number
+  ) {
     const revId = uuid();
     const query = `
       MATCH (u:User { id: $userId }), (b:Book { id: $bookId })
@@ -68,7 +72,8 @@ export class BooksService {
       rating: node.properties.rating,
       reviewerName,
       createdAt:
-        node.properties.createdAt && typeof node.properties.createdAt.toString === "function"
+        node.properties.createdAt &&
+        typeof node.properties.createdAt.toString === "function"
           ? node.properties.createdAt.toString()
           : node.properties.createdAt,
     };
@@ -170,27 +175,46 @@ export class BooksService {
       MATCH (b:Book)
       OPTIONAL MATCH (b)-[:BELONGS_TO]->(g:Genre)
       OPTIONAL MATCH (b)-[:HAS_COPY]->(bc:BookCopy)
+      OPTIONAL MATCH (bc)<-[:OF_COPY]-(br:Borrow)
+      OPTIONAL MATCH (b)<-[:ON]-(rev:Review)
       WHERE
-      b.title CONTAINS $query OR
-      b.author CONTAINS $query OR
-      b.isbn CONTAINS $query OR
-      (g.name IS NOT NULL AND g.name CONTAINS $query)
-      WITH b, g, COLLECT(bc) AS copies
-      RETURN {
-      properties: b {
-        .*, 
-        genre: g.name, 
-        totalCopies: size(copies), 
-        availableCopies: size([c IN copies WHERE c.status = 'AVAILABLE']),
-        copies: [c IN copies | { id: c.id, status: c.status }]
-      }
-      } AS b
+        b.title CONTAINS $query OR
+        b.author CONTAINS $query OR
+        b.isbn CONTAINS $query OR
+        (g.name IS NOT NULL AND g.name CONTAINS $query)
+      WITH b, g, COLLECT(DISTINCT bc) AS copies, AVG(rev.rating) AS avgRating, COUNT(DISTINCT br) AS borrowCount, COUNT(DISTINCT rev) AS reviewCount
+      RETURN b AS book, g.name AS genre, copies AS copies, avgRating AS avgRating, borrowCount AS borrowCount, reviewCount AS reviewCount
       SKIP $skip
       LIMIT $limit
     `;
 
     const result = await this.neo4j.read(searchQuery, { query, skip, limit });
-    return result.records.map((r: any) => this.mapNeo4jToBook(r.get("b")));
+
+    const toNumber = (v: any) =>
+      v && typeof v.toNumber === "function" ? v.toNumber() : v !== undefined && v !== null ? Number(v) : null;
+
+    return result.records.map((r: any) => {
+      const bookNode = r.get("book");
+      const genre = r.get("genre") ?? null;
+      const copies = r.get("copies") || [];
+      const rawAvg = r.get("avgRating");
+      const rawBorrowCount = r.get("borrowCount");
+      const rawReviewCount = r.get("reviewCount");
+
+      // build a node-like object compatible with mapNeo4jToBook
+      const properties = {
+        ...(bookNode && bookNode.properties ? bookNode.properties : {}),
+        genre,
+        totalCopies: copies.length,
+        availableCopies: copies.filter((c: any) => c.properties?.status === "AVAILABLE").length,
+        copies: copies.map((c: any) => ({ id: c.properties?.id, status: c.properties?.status })),
+        avgRating: rawAvg === null || rawAvg === undefined ? null : toNumber(rawAvg),
+        borrowCount: toNumber(rawBorrowCount) ?? 0,
+        reviewCount: toNumber(rawReviewCount) ?? 0,
+      };
+
+      return this.mapNeo4jToBook({ properties } as any);
+    });
   }
 
   async getAvailableCopies(bookId: string) {
@@ -218,6 +242,31 @@ export class BooksService {
   }
 
   private mapNeo4jToBook(node: any) {
+    const props = node.properties || node.properties || {};
+    const rawAvg = props.avgRating;
+    const avgRating =
+      rawAvg === null || rawAvg === undefined
+        ? null
+        : typeof rawAvg.toNumber === "function"
+          ? rawAvg.toNumber()
+          : Number(rawAvg);
+
+    const rawBorrowCount = props.borrowCount;
+    const borrowCount =
+      rawBorrowCount && typeof rawBorrowCount.toNumber === "function"
+        ? rawBorrowCount.toNumber()
+        : rawBorrowCount !== undefined && rawBorrowCount !== null
+          ? Number(rawBorrowCount)
+          : 0;
+
+    const rawReviewCount = props.reviewCount;
+    const reviewCount =
+      rawReviewCount && typeof rawReviewCount.toNumber === "function"
+        ? rawReviewCount.toNumber()
+        : rawReviewCount !== undefined && rawReviewCount !== null
+          ? Number(rawReviewCount)
+          : 0;
+
     return {
       id: node.properties.id,
       title: node.properties.title,
@@ -230,10 +279,22 @@ export class BooksService {
       pages: node.properties.pages,
       language: node.properties.language,
       coverImage: node.properties.coverImage,
-      createdAt: new Date(node.properties.createdAt),
-      totalCopies: node.properties?.copies?.length,
-      availableCopies: node.properties?.copies ? node.properties.copies.filter((c: any) => c.status === "AVAILABLE").length : 0,
-      copies: node.properties?.copies || [],
+      createdAt: node.properties.createdAt
+        ? new Date(node.properties.createdAt)
+        : null,
+      totalCopies:
+        node.properties?.totalCopies ??
+        (props?.copies ? props.copies.length : undefined),
+      availableCopies:
+        typeof node.properties?.availableCopies !== "undefined"
+          ? node.properties.availableCopies
+          : props?.copies
+            ? props.copies.filter((c: any) => c.status === "AVAILABLE").length
+            : 0,
+      copies: props?.copies || node.properties?.copies || [],
+      rating: Number(avgRating),
+      borrowCount,
+      reviewCount,
     };
   }
 }
