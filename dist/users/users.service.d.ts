@@ -9,50 +9,55 @@ export declare class UsersService {
         email: any;
         name: any;
         role: any;
-        score: any;
+        score: number;
         tier: any;
         imageUrl: any;
-        createdAt: any;
+        createdAt: Date;
+        status: any;
     }>;
     create(createUserDto: CreateUserDto): Promise<{
         id: any;
         email: any;
         name: any;
         role: any;
-        score: any;
+        score: number;
         tier: any;
         imageUrl: any;
-        createdAt: any;
+        createdAt: Date;
+        status: any;
     }>;
     createWithRole(createUserDto: any): Promise<{
         id: any;
         email: any;
         name: any;
         role: any;
-        score: any;
+        score: number;
         tier: any;
         imageUrl: any;
-        createdAt: any;
+        createdAt: Date;
+        status: any;
     }>;
     findByEmail(email: string): Promise<{
         id: any;
         email: any;
         name: any;
         role: any;
-        score: any;
+        score: number;
         tier: any;
         imageUrl: any;
-        createdAt: any;
+        createdAt: Date;
+        status: any;
     } | null>;
     findById(id: string): Promise<{
         id: any;
         email: any;
         name: any;
         role: any;
-        score: any;
+        score: number;
         tier: any;
         imageUrl: any;
-        createdAt: any;
+        createdAt: Date;
+        status: any;
     } | null>;
     getUserProfile(userId: string): Promise<{
         borrowCount: any;
@@ -61,30 +66,42 @@ export declare class UsersService {
         email: any;
         name: any;
         role: any;
-        score: any;
+        score: number;
         tier: any;
         imageUrl: any;
-        createdAt: any;
+        createdAt: Date;
+        status: any;
     }>;
     getAllUsers(limit?: number, skip?: number): Promise<{
+        totalBorrows: any;
+        activeBorrows: any;
+        completedBorrows: any;
+        onTimeReturns: any;
+        onTimeRate: number;
+        maxActiveBorrowDays: any;
         id: any;
         email: any;
         name: any;
         role: any;
-        score: any;
+        score: number;
         tier: any;
         imageUrl: any;
-        createdAt: any;
+        createdAt: Date;
+        status: any;
     }[]>;
     updateScore(userId: string, newScore: number): Promise<{
         id: any;
         email: any;
         name: any;
         role: any;
-        score: any;
+        score: number;
         tier: any;
         imageUrl: any;
-        createdAt: any;
+        createdAt: Date;
+        status: any;
     }>;
     private mapNeo4jToUser;
+    deleteUser(id: string): Promise<{
+        message: string;
+    }>;
 }

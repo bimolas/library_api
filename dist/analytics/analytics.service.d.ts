@@ -12,6 +12,10 @@ export declare class AnalyticsService {
         tier: any;
         createdAt: any;
         progress: any;
+        name: any;
+        email: any;
+        status: any;
+        imageUrl: any;
     }>;
     getTrendingBooks(limit?: number): Promise<{
         id: any;

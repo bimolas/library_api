@@ -9,6 +9,7 @@ import {
   UploadedFile,
   BadRequestException,
   UseInterceptors,
+  Delete,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody } from "@nestjs/swagger";
 import { UsersService } from "./users.service";
@@ -93,5 +94,14 @@ export class UsersController {
 
     updateUserDto.imageUrl = avatarPath;
     return this.usersService.updateUser(id, updateUserDto);
+  }
+
+  @Delete(":id")
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles("ADMIN")
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Delete a user (admin only)" })
+  async deleteUser(@Param("id") id: string) {
+    return this.usersService.deleteUser(id);
   }
 }

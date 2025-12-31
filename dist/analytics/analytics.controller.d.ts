@@ -12,6 +12,10 @@ export declare class AnalyticsController {
         tier: any;
         createdAt: any;
         progress: any;
+        name: any;
+        email: any;
+        status: any;
+        imageUrl: any;
     }>;
     getTrendingBooks(): Promise<{
         id: any;
@@ -44,4 +48,19 @@ export declare class AnalyticsController {
         rating: any;
         demandPressure: any;
     }[]>;
+    getUserAnaliticById(id: string): Promise<{
+        borrowCount: any;
+        reservationCount: any;
+        reviewCount: any;
+        genresRead: any;
+        totalScoreEvents: any;
+        currentScore: any;
+        tier: any;
+        createdAt: any;
+        progress: any;
+        name: any;
+        email: any;
+        status: any;
+        imageUrl: any;
+    }>;
 }

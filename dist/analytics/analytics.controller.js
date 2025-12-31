@@ -46,6 +46,9 @@ let AnalyticsController = class AnalyticsController {
     async getRecommendations(user, limit = 10) {
         return this.analyticsService.getRecommendations(user.userId, Number(limit));
     }
+    async getUserAnaliticById(id) {
+        return this.analyticsService.getUserAnalytics(id);
+    }
 };
 exports.AnalyticsController = AnalyticsController;
 __decorate([
@@ -117,6 +120,16 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getRecommendations", null);
+__decorate([
+    (0, common_1.Get)("user/:id"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)("access-token"),
+    (0, swagger_1.ApiOperation)({ summary: "Get recommended books for a user" }),
+    __param(0, (0, common_1.Param)("id")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getUserAnaliticById", null);
 exports.AnalyticsController = AnalyticsController = __decorate([
     (0, swagger_1.ApiTags)("Analytics"),
     (0, common_1.Controller)("analytics"),

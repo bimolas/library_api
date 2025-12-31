@@ -32,6 +32,22 @@ export declare class BorrowingController {
             status: any;
         };
     }[]>;
+    getUserBorrowsById(id: string): Promise<{
+        id: any;
+        status: any;
+        borrowDate: any;
+        dueDate: any;
+        returnDate: any;
+        book: {
+            id: any;
+            title: any;
+            author: any;
+        };
+        copy: {
+            id: any;
+            status: any;
+        };
+    }[]>;
     getOverdueBooks(user: any): Promise<{
         id: any;
         book: any;

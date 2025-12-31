@@ -49,6 +49,9 @@ let UsersController = class UsersController {
         updateUserDto.imageUrl = avatarPath;
         return this.usersService.updateUser(id, updateUserDto);
     }
+    async deleteUser(id) {
+        return this.usersService.deleteUser(id);
+    }
 };
 exports.UsersController = UsersController;
 __decorate([
@@ -115,6 +118,17 @@ __decorate([
     __metadata("design:paramtypes", [String, uipdate_user_dto_1.UpdateUserDto, Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "updateUser", null);
+__decorate([
+    (0, common_1.Delete)(":id"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, role_guard_1.RoleGuard),
+    (0, roles_decorator_1.Roles)("ADMIN"),
+    (0, swagger_1.ApiBearerAuth)("access-token"),
+    (0, swagger_1.ApiOperation)({ summary: "Delete a user (admin only)" }),
+    __param(0, (0, common_1.Param)("id")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "deleteUser", null);
 exports.UsersController = UsersController = __decorate([
     (0, swagger_1.ApiTags)("Users"),
     (0, common_1.Controller)("users"),

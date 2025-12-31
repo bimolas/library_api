@@ -27,6 +27,10 @@ let AnalyticsService = class AnalyticsService {
            u.score AS currentScore,
            u.tier AS tier,
            u.createdAt AS createdAt,
+           u.name AS name,
+           u.email AS email,
+           u.status AS status,
+           u.imageUrl AS imageUrl,
            (CASE WHEN u.name IS NOT NULL THEN 1 ELSE 0 END +
             CASE WHEN u.email IS NOT NULL THEN 1 ELSE 0 END +
             CASE WHEN u.imageUrl IS NOT NULL THEN 1 ELSE 0 END) AS filledFields,
@@ -35,7 +39,7 @@ let AnalyticsService = class AnalyticsService {
            COUNT(DISTINCT rev) AS reviewCount,
            COLLECT(DISTINCT g.name) AS genresRead,
            COUNT(DISTINCT se) AS totalScoreEvents
-      WITH u, currentScore, tier, createdAt, borrowCount, reservationCount, reviewCount, genresRead, totalScoreEvents, filledFields,
+      WITH u, currentScore, tier, createdAt, name, email, status, imageUrl, borrowCount, reservationCount, reviewCount, genresRead, totalScoreEvents, filledFields,
            CASE WHEN 3 > 0 THEN toFloat(filledFields) / 3.0 * 100.0 ELSE 0 END AS progress
       RETURN {
         borrowCount: borrowCount,
@@ -46,7 +50,11 @@ let AnalyticsService = class AnalyticsService {
         currentScore: currentScore,
         tier: tier,
         createdAt: createdAt,
-        progress: progress
+        progress: progress,
+        name: name,
+        email: email,
+        status: status,
+        imageUrl: imageUrl
       } as analytics
     `;
         const result = await this.neo4j.read(query, { userId });
@@ -61,9 +69,15 @@ let AnalyticsService = class AnalyticsService {
                 tier: null,
                 createdAt: null,
                 progress: 0,
+                name: null,
+                email: null,
+                status: null,
+                imageUrl: null,
             };
         }
         const raw = result.records[0].get("analytics");
+        const toNumber = (v) => v && typeof v.toNumber === "function" ? v.toNumber() : Number(v) || 0;
+        const toStringDate = (v) => v && typeof v.toString === "function" ? v.toString() : v ?? null;
         return {
             borrowCount: raw.borrowCount && typeof raw.borrowCount.toNumber === "function"
                 ? raw.borrowCount.toNumber()
@@ -82,12 +96,15 @@ let AnalyticsService = class AnalyticsService {
                 ? raw.currentScore.toNumber()
                 : raw.currentScore ?? 0,
             tier: raw.tier ?? null,
-            createdAt: raw.createdAt && typeof raw.createdAt.toString === "function"
-                ? raw.createdAt.toString()
-                : raw.createdAt ?? null,
+            createdAt: toStringDate(raw.createdAt),
             progress: raw.progress && typeof raw.progress.toNumber === "function"
                 ? raw.progress.toNumber()
                 : Number(raw.progress) || 0,
+            // new user info
+            name: raw.name ?? null,
+            email: raw.email ?? null,
+            status: raw.status ?? "ACTIVE",
+            imageUrl: raw.imageUrl ?? null,
         };
     }
     async getTrendingBooks(limit = 10) {

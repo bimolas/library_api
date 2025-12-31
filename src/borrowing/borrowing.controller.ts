@@ -35,6 +35,14 @@ export class BorrowingController {
     return this.borrowingService.getUserBorrows(user.userId);
   }
 
+  @Get("user/:id")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Get user borrow history" })
+  async getUserBorrowsById(@Param("id") id: string) {
+    return this.borrowingService.getUserBorrows(id);
+  }
+
   @Get("overdue")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth("access-token")

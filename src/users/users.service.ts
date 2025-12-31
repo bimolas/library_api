@@ -7,15 +7,9 @@ import * as bcrypt from "bcryptjs";
 import { UpdateUserDto } from "./dto/uipdate-user.dto";
 @Injectable()
 export class UsersService {
- 
   constructor(private neo4j: Neo4jService) {}
 
-
-   async updateUser(id:string, updateUserDto: UpdateUserDto) {
-    console.log(
-      "🚀 ~ UsersService ~ updateUser ~ updateUserDto:",
-      updateUserDto
-    );
+  async updateUser(id: string, updateUserDto: UpdateUserDto) {
     const existingUser = await this.findById(id);
     if (!existingUser) {
       throw new BadRequestException("User not found");
@@ -46,7 +40,7 @@ export class UsersService {
     }
 
     if (updates.length === 0) {
-      return existingUser; 
+      return existingUser;
     }
 
     const query = `
@@ -67,8 +61,9 @@ export class UsersService {
         name: $name,
         password: $password,
         role: 'USER',
-        createdAt: datetime(),
-        score: 100,
+        createdAt: $createdAt,
+        score: $score,
+        status: $status,
         tier: 'BRONZE'
       })
       RETURN u
@@ -79,6 +74,9 @@ export class UsersService {
       email: createUserDto.email,
       name: createUserDto.name,
       password: createUserDto.password,
+      createdAt: new Date().toISOString(),
+      score: 0,
+      status: 'ACTIVE',
     });
 
     return this.mapNeo4jToUser(result.records[0].get("u"));
@@ -99,8 +97,9 @@ export class UsersService {
         name: $name,
         password: $password,
         role: $role,
-        createdAt: datetime(),
-        score: 100,
+        createdAt: $createdAt,
+        score: $score,
+        status: $status,
         tier: 'BRONZE'
       })
       RETURN u
@@ -112,6 +111,9 @@ export class UsersService {
       name: createUserDto.name,
       password: createUserDto.password,
       role: createUserDto.role,
+      createdAt: new Date().toISOString(),
+      score: 0,
+      status: 'ACTIVE',
     });
 
     return this.mapNeo4jToUser(result.records[0].get("u"));
@@ -129,7 +131,7 @@ export class UsersService {
       createdAt: node.properties.createdAt,
       password: node.properties.password,
       imageUrl: node.properties.imageUrl,
-    });
+  });
     const result = await this.neo4j.read(query, { email });
 
     if (result.records.length === 0) return null;
@@ -164,17 +166,61 @@ export class UsersService {
     };
   }
 
-  async getAllUsers(limit: number = 10, skip: number = 0) {
+async getAllUsers(limit: number = 100, skip: number = 0) {
     const query = `
       MATCH (u:User)
-      RETURN u
+      OPTIONAL MATCH (u)-[:BORROWED]->(borrow:Borrow)
+      WITH u, collect(borrow) AS borrows, borrow
+      RETURN u,
+             COUNT(borrow) AS totalBorrows,
+             SUM(CASE WHEN borrow.status = 'ACTIVE' THEN 1 ELSE 0 END) AS activeBorrows,
+             SUM(CASE WHEN borrow.status = 'COMPLETED' THEN 1 ELSE 0 END) AS completedBorrows,
+             SUM(
+               CASE
+                 WHEN borrow.status = 'COMPLETED' AND borrow.returnDate IS NOT NULL AND borrow.dueDate IS NOT NULL
+                   AND (datetime(borrow.returnDate) <= datetime(borrow.dueDate))
+                 THEN 1 ELSE 0
+               END
+             ) AS onTimeReturns,
+             MAX(
+               CASE
+                 WHEN borrow.status = 'ACTIVE' AND borrow.borrowDate IS NOT NULL AND borrow.dueDate IS NOT NULL
+                 THEN toInteger( (datetime(borrow.dueDate).epochMillis - datetime(borrow.borrowDate).epochMillis) / 86400000 )
+                 ELSE NULL
+               END
+             ) AS maxActiveBorrowDays
+      ORDER BY u.createdAt DESC
       SKIP $skip
       LIMIT $limit
     `;
     const result = await this.neo4j.read(query, { skip, limit });
-    return result.records.map((r: any) => this.mapNeo4jToUser(r.get("u")));
-  }
 
+    const toNum = (v: any) =>
+      v && typeof v.toNumber === "function" ? v.toNumber() : Number(v) || 0;
+
+    return result.records.map((r: any) => {
+      const userNode = r.get("u");
+      const totalBorrows = toNum(r.get("totalBorrows"));
+      const activeBorrows = toNum(r.get("activeBorrows"));
+      const completedBorrows = toNum(r.get("completedBorrows"));
+      const onTimeReturns = toNum(r.get("onTimeReturns"));
+      const maxActiveBorrowDays = r.get("maxActiveBorrowDays") === null ? 0 : toNum(r.get("maxActiveBorrowDays"));
+
+      const onTimeReturnPercent =
+        completedBorrows > 0 ? Math.round((onTimeReturns / completedBorrows) * 10000) / 100 : 0;
+
+      return {
+        ...this.mapNeo4jToUser(userNode),
+        totalBorrows,
+        activeBorrows,
+        completedBorrows,
+        onTimeReturns,
+        onTimeRate: onTimeReturnPercent,
+        maxActiveBorrowDays, // number of days (integer) of the longest active borrow period (0 if none)
+      };
+    });
+  }
+  
   async updateScore(userId: string, newScore: number) {
     const query = `
       MATCH (u:User { id: $userId })
@@ -193,19 +239,50 @@ export class UsersService {
   }
 
   private mapNeo4jToUser(node: any) {
-    console.log(
-      "🚀 ~ UsersService ~ mapNeo4jToUser ~ node:",
-      node
-    );
+    const rawScore = node.properties?.score;
+    let scoreNum = 0;
+    if (rawScore === undefined || rawScore === null) {
+      scoreNum = 0;
+    } else if (typeof rawScore === "number") {
+      scoreNum = rawScore;
+    } else if (rawScore && typeof rawScore.toNumber === "function") {
+      // Neo4j Integer object
+      scoreNum = rawScore.toNumber();
+    } else if (rawScore && typeof rawScore.low === "number") {
+      // older integer-like object { low, high }
+      scoreNum = rawScore.low;
+    } else {
+      const parsed = Number(rawScore);
+      scoreNum = isNaN(parsed) ? 0 : parsed;
+    }
+
+    const createdAtRaw = node.properties?.createdAt;
+    const createdAt =
+      createdAtRaw && typeof createdAtRaw.toString === "function"
+        ? new Date(createdAtRaw.toString())
+        : createdAtRaw
+          ? new Date(createdAtRaw)
+          : null;
+
     return {
       id: node.properties.id,
       email: node.properties.email,
       name: node.properties.name,
       role: node.properties.role,
-      score: node.properties.score,
+      score: scoreNum,
       tier: node.properties.tier,
-      imageUrl: node.properties.imageUrl,
-      createdAt: node.properties.createdAt,
+      imageUrl: node.properties.imageUrl ?? null,
+      createdAt : new Date(node.properties.createdAt),
+      status: node?.properties?.status ?? "ACTIVE",
     };
+  }
+
+  async deleteUser(id: string) {
+    const query = `
+      MATCH (u:User { id: $id })
+      DETACH DELETE u
+    `;
+    await this.neo4j.write(query, { id });
+    return { message: "User deleted successfully" };
   }
 }

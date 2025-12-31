@@ -11,49 +11,63 @@ export declare class UsersController {
         email: any;
         name: any;
         role: any;
-        score: any;
+        score: number;
         tier: any;
         imageUrl: any;
-        createdAt: any;
+        createdAt: Date;
+        status: any;
     }>;
     getUserById(id: string): Promise<{
         id: any;
         email: any;
         name: any;
         role: any;
-        score: any;
+        score: number;
         tier: any;
         imageUrl: any;
-        createdAt: any;
+        createdAt: Date;
+        status: any;
     } | null>;
     getAllUsers(): Promise<{
+        totalBorrows: any;
+        activeBorrows: any;
+        completedBorrows: any;
+        onTimeReturns: any;
+        onTimeRate: number;
+        maxActiveBorrowDays: any;
         id: any;
         email: any;
         name: any;
         role: any;
-        score: any;
+        score: number;
         tier: any;
         imageUrl: any;
-        createdAt: any;
+        createdAt: Date;
+        status: any;
     }[]>;
     createUser(createUserDto: CreateUserWithRoleDto): Promise<{
         id: any;
         email: any;
         name: any;
         role: any;
-        score: any;
+        score: number;
         tier: any;
         imageUrl: any;
-        createdAt: any;
+        createdAt: Date;
+        status: any;
     }>;
     updateUser(id: string, updateUserDto: UpdateUserDto, file: any): Promise<{
         id: any;
         email: any;
         name: any;
         role: any;
-        score: any;
+        score: number;
         tier: any;
         imageUrl: any;
-        createdAt: any;
+        createdAt: Date;
+        status: any;
+    }>;
+    deleteUser(id: string): Promise<{
+        message: string;
     }>;
 }

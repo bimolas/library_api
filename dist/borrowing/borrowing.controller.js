@@ -32,6 +32,9 @@ let BorrowingController = class BorrowingController {
     async getUserBorrows(user) {
         return this.borrowingService.getUserBorrows(user.userId);
     }
+    async getUserBorrowsById(id) {
+        return this.borrowingService.getUserBorrows(id);
+    }
     async getOverdueBooks(user) {
         return this.borrowingService.getOverdueBooks(user.userId);
     }
@@ -70,6 +73,16 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], BorrowingController.prototype, "getUserBorrows", null);
+__decorate([
+    (0, common_1.Get)("user/:id"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)("access-token"),
+    (0, swagger_1.ApiOperation)({ summary: "Get user borrow history" }),
+    __param(0, (0, common_1.Param)("id")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], BorrowingController.prototype, "getUserBorrowsById", null);
 __decorate([
     (0, common_1.Get)("overdue"),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

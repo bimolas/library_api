@@ -69,4 +69,12 @@ export class AnalyticsController {
   async getRecommendations(@AuthenticatedUser() user: any, @Query("limit") limit = 10) {
     return this.analyticsService.getRecommendations(user.userId, Number(limit));
   }
+
+  @Get("user/:id")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Get recommended books for a user" })
+  async getUserAnaliticById(@Param("id") id: string) {
+    return this.analyticsService.getUserAnalytics(id);
+  }
 }
