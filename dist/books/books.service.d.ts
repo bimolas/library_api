@@ -3,6 +3,9 @@ import type { CreateBookDto } from "./dto/create-book.dto";
 export declare class BooksService {
     private neo4j;
     constructor(neo4j: Neo4jService);
+    deleteBook(bookId: string): Promise<{
+        message: string;
+    }>;
     getComments(bookId: string): Promise<{
         id: any;
         message: any;
@@ -38,9 +41,33 @@ export declare class BooksService {
         borrowCount: any;
         reviewCount: any;
     }>;
+    updateBook(bookId: string, updateBookDto: CreateBookDto): Promise<{
+        id: any;
+        title: any;
+        author: any;
+        isbn: any;
+        description: any;
+        publicationYear: any;
+        genre: any;
+        publisher: any;
+        pages: any;
+        language: any;
+        coverImage: any;
+        createdAt: Date | null;
+        totalCopies: any;
+        availableCopies: any;
+        copies: any;
+        rating: number;
+        borrowCount: any;
+        reviewCount: any;
+    }>;
     addBookCopy(bookId: string, quantity?: number): Promise<{
         bookId: string;
         copiesTotalAdded: number;
+    }>;
+    removeBookCopies(bookId: string, quantity?: number): Promise<{
+        bookId: string;
+        deleted: any;
     }>;
     getBook(bookId: string): Promise<{
         genre: any;

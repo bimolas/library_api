@@ -7,7 +7,27 @@ declare class AddCopiesDto {
 export declare class BooksController {
     private booksService;
     constructor(booksService: BooksService);
-    createBook(createBookDto: CreateBookDto): Promise<{
+    createBook(createBookDto: CreateBookDto, file: any): Promise<{
+        id: any;
+        title: any;
+        author: any;
+        isbn: any;
+        description: any;
+        publicationYear: any;
+        genre: any;
+        publisher: any;
+        pages: any;
+        language: any;
+        coverImage: any;
+        createdAt: Date | null;
+        totalCopies: any;
+        availableCopies: any;
+        copies: any;
+        rating: number;
+        borrowCount: any;
+        reviewCount: any;
+    }>;
+    updateBook(bookId: string, updateBookDto: CreateBookDto, file: any): Promise<{
         id: any;
         title: any;
         author: any;
@@ -30,6 +50,13 @@ export declare class BooksController {
     addCopies(bookId: string, body: AddCopiesDto): Promise<{
         bookId: string;
         copiesTotalAdded: number;
+    }>;
+    deleteBook(bookId: string): Promise<{
+        message: string;
+    }>;
+    deleteBookCopies(bookId: string, quantity: number): Promise<{
+        bookId: string;
+        deleted: any;
     }>;
     searchBooks(query: string, limit?: number, skip?: number): Promise<{
         id: any;

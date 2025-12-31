@@ -4,7 +4,90 @@ import { Neo4jService } from "../neo4j/neo4j.service";
 @Injectable()
 export class AnalyticsService {
   constructor(private neo4j: Neo4jService) {}
- async getUserAnalytics(userId: string) {
+async getPlatformSummary() {
+    const query = `
+      CALL {
+        MATCH (b:Borrow) WHERE b.status = 'ACTIVE' RETURN count(b) AS totalActiveBorrows
+      }
+      CALL {
+        MATCH (r:Reservation) WHERE r.status = 'ACTIVE' RETURN count(r) AS totalActiveReservations
+      }
+      CALL {
+        MATCH (u:User) RETURN count(u) AS totalUsers
+      }
+      CALL {
+        MATCH (cb:Borrow)
+        WHERE cb.borrowDate IS NOT NULL
+        RETURN avg(
+          toFloat(
+            CASE
+              WHEN cb.status = 'COMPLETED' AND cb.returnDate IS NOT NULL
+                THEN datetime(cb.returnDate).epochMillis - datetime(cb.borrowDate).epochMillis
+              ELSE datetime().epochMillis - datetime(cb.borrowDate).epochMillis
+            END
+          ) / 86400000.0
+        ) AS avgBorrowDays
+      }
+      RETURN {
+        totalActiveBorrows: totalActiveBorrows,
+        totalActiveReservations: totalActiveReservations,
+        totalUsers: totalUsers,
+        avgBorrowDays: avgBorrowDays
+      } AS summary
+    `;
+
+    const result = await this.neo4j.read(query);
+
+    if (!result.records || result.records.length === 0) {
+      return {
+        totalActiveBorrows: 0,
+        totalActiveReservations: 0,
+        totalUsers: 0,
+        avgBorrowDays: 0,
+      };
+    }
+
+    const raw = result.records[0].get("summary");
+
+    const toNumber = (v: any) =>
+      v && typeof v.toNumber === "function"
+        ? v.toNumber()
+        : v !== undefined && v !== null
+          ? Number(v)
+          : 0;
+
+    const totalActiveBorrows =
+      raw.totalActiveBorrows && typeof raw.totalActiveBorrows.toNumber === "function"
+        ? raw.totalActiveBorrows.toNumber()
+        : Number(raw.totalActiveBorrows) || 0;
+
+    const totalActiveReservations =
+      raw.totalActiveReservations &&
+      typeof raw.totalActiveReservations.toNumber === "function"
+        ? raw.totalActiveReservations.toNumber()
+        : Number(raw.totalActiveReservations) || 0;
+
+    const totalUsers =
+      raw.totalUsers && typeof raw.totalUsers.toNumber === "function"
+        ? raw.totalUsers.toNumber()
+        : Number(raw.totalUsers) || 0;
+
+    const rawAvg = raw.avgBorrowDays;
+    const avgBorrowDays =
+      rawAvg === null || rawAvg === undefined
+        ? 0
+        : typeof rawAvg.toNumber === "function"
+          ? Math.round(rawAvg.toNumber() * 100) / 100
+          : Math.round(Number(rawAvg) * 100) / 100;
+
+    return {
+      totalActiveBorrows,
+      totalActiveReservations,
+      totalUsers,
+      avgBorrowDays,
+    };
+  }
+  async getUserAnalytics(userId: string) {
     const query = `
       MATCH (u:User { id: $userId })
       OPTIONAL MATCH (u)-[:BORROWED]->(b:Borrow)
@@ -71,7 +154,7 @@ export class AnalyticsService {
       v && typeof v.toNumber === "function" ? v.toNumber() : Number(v) || 0;
 
     const toStringDate = (v: any) =>
-      v && typeof v.toString === "function" ? v.toString() : v ?? null;
+      v && typeof v.toString === "function" ? v.toString() : (v ?? null);
 
     return {
       borrowCount:
@@ -79,7 +162,8 @@ export class AnalyticsService {
           ? raw.borrowCount.toNumber()
           : Number(raw.borrowCount) || 0,
       reservationCount:
-        raw.reservationCount && typeof raw.reservationCount.toNumber === "function"
+        raw.reservationCount &&
+        typeof raw.reservationCount.toNumber === "function"
           ? raw.reservationCount.toNumber()
           : Number(raw.reservationCount) || 0,
       reviewCount:
@@ -88,13 +172,14 @@ export class AnalyticsService {
           : Number(raw.reviewCount) || 0,
       genresRead: raw.genresRead || [],
       totalScoreEvents:
-        raw.totalScoreEvents && typeof raw.totalScoreEvents.toNumber === "function"
+        raw.totalScoreEvents &&
+        typeof raw.totalScoreEvents.toNumber === "function"
           ? raw.totalScoreEvents.toNumber()
           : Number(raw.totalScoreEvents) || 0,
       currentScore:
         raw.currentScore && typeof raw.currentScore.toNumber === "function"
           ? raw.currentScore.toNumber()
-          : raw.currentScore ?? 0,
+          : (raw.currentScore ?? 0),
       tier: raw.tier ?? null,
       createdAt: toStringDate(raw.createdAt),
       progress:
@@ -109,7 +194,7 @@ export class AnalyticsService {
     };
   }
 
-async getTrendingBooks(limit = 10) {
+  async getTrendingBooks(limit = 10) {
     const query = `
       MATCH (book:Book)-[:HAS_COPY]->(bc:BookCopy)
       OPTIONAL MATCH (bc)<-[:OF_COPY]-(br:Borrow)
@@ -154,8 +239,8 @@ async getTrendingBooks(limit = 10) {
           rawAvg === null || rawAvg === undefined
             ? null
             : typeof rawAvg.toNumber === "function"
-            ? rawAvg.toNumber()
-            : Number(rawAvg),
+              ? rawAvg.toNumber()
+              : Number(rawAvg),
         reviewCount:
           rawReviewCount && typeof rawReviewCount.toNumber === "function"
             ? rawReviewCount.toNumber()
@@ -229,8 +314,8 @@ async getTrendingBooks(limit = 10) {
         rawTotal && typeof rawTotal.toNumber === "function"
           ? rawTotal.toNumber()
           : rawTotal !== undefined && rawTotal !== null
-          ? Number(rawTotal)
-          : 0;
+            ? Number(rawTotal)
+            : 0;
 
       return {
         genre: r.get("genre"),
@@ -240,8 +325,8 @@ async getTrendingBooks(limit = 10) {
     });
   }
 
- // ...existing code...
- async getRecommendations(userId: string, limit = 10) {
+  // ...existing code...
+  async getRecommendations(userId: string, limit = 10) {
     const query = `
       MATCH (u:User { id: $userId })
       OPTIONAL MATCH (u)-[:BORROWED]->(:Borrow)-[:OF_COPY]->(:BookCopy)<-[:HAS_COPY]-(ub:Book)
@@ -314,15 +399,15 @@ async getTrendingBooks(limit = 10) {
         rawAvg === null || rawAvg === undefined
           ? null
           : typeof rawAvg.toNumber === "function"
-          ? rawAvg.toNumber()
-          : Number(rawAvg);
+            ? rawAvg.toNumber()
+            : Number(rawAvg);
 
       const demandPressure =
         rawDemand === null || rawDemand === undefined
           ? 0
           : typeof rawDemand.toNumber === "function"
-          ? rawDemand.toNumber()
-          : Number(rawDemand);
+            ? rawDemand.toNumber()
+            : Number(rawDemand);
 
       return {
         id: bookObj.id,
@@ -330,7 +415,7 @@ async getTrendingBooks(limit = 10) {
         author: bookObj.author,
         description: bookObj.description,
         publicationYear: bookObj.publicationYear,
-        genres,                        // array of genre names (usually one)
+        genres, // array of genre names (usually one)
         genre: Array.isArray(genres) && genres.length > 0 ? genres[0] : null,
         popularity,
         totalCopies,
@@ -340,7 +425,7 @@ async getTrendingBooks(limit = 10) {
       };
     });
   }
-// ...existing code...
+  // ...existing code...
 
   async getLateReturnStatistics() {
     const query = `
@@ -365,7 +450,13 @@ async getTrendingBooks(limit = 10) {
     `;
 
     const result = await this.neo4j.read(query);
-    if (!result.records || result.records.length === 0) return { totalLateReturns: 0, averageLateDays: null, maxLateDays: null, lateReturnRate: 0 };
+    if (!result.records || result.records.length === 0)
+      return {
+        totalLateReturns: 0,
+        averageLateDays: null,
+        maxLateDays: null,
+        lateReturnRate: 0,
+      };
     return result.records[0].get("stats");
   }
 }

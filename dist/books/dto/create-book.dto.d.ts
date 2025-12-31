@@ -3,10 +3,9 @@ export declare class CreateBookDto {
     author: string;
     isbn: string;
     description: string;
-    publicationYear: number;
     genre: string;
     coverImage?: string;
-    publisher: string;
-    pages: number;
+    pages: string;
+    totalCopies: string;
     language: string;
 }

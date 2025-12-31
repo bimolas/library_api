@@ -5,8 +5,24 @@ import { randomUUID as uuid } from "crypto";
 
 @Injectable()
 export class BooksService {
+ 
   constructor(private neo4j: Neo4jService) {}
 
+  async deleteBook(bookId: string) {
+    const query = `
+      MATCH (b:Book { id: $bookId })
+      DETACH DELETE b
+      RETURN COUNT(b) AS deletedCount
+    `;
+    const result = await this.neo4j.write(query, { bookId });
+    const deletedCount = result.records[0].get("deletedCount").toNumber();
+
+    if (deletedCount === 0) {
+      throw new NotFoundException("Book not found");
+    }
+
+    return { message: "Book deleted successfully" };
+  }
   async getComments(bookId: string) {
     const query = `
       MATCH (b:Book { id: $bookId })<-[:ON]-(rev:Review)<-[:REVIEWED]-(u:User)
@@ -82,6 +98,9 @@ export class BooksService {
   }
 
   async createBook(createBookDto: CreateBookDto) {
+    const pages = parseInt(createBookDto.pages as unknown as string, 10) || 340;
+    const totalCopies =
+      parseInt(createBookDto.totalCopies as unknown as string, 10) || 0;
     const bookId = uuid();
     const query = `
        MERGE (g:Genre { name: $genreName })
@@ -91,12 +110,10 @@ export class BooksService {
         author: $author,
         isbn: $isbn,
         description: $description,
-        publicationYear: $publicationYear,
-        publisher: $publisher,
         pages: $pages,
         language: $language,
         coverImage: $coverImage,
-        createdAt: datetime()
+        createdAt: $createdAt
       })
       CREATE (b)-[:BELONGS_TO]->(g)
       RETURN b
@@ -108,13 +125,54 @@ export class BooksService {
       author: createBookDto.author,
       isbn: createBookDto.isbn,
       description: createBookDto.description,
-      publicationYear: createBookDto.publicationYear,
       genreName: createBookDto.genre,
-      publisher: createBookDto.publisher,
-      pages: createBookDto.pages,
+      pages: pages,
       language: createBookDto.language,
       coverImage: createBookDto.coverImage,
+      createdAt: new Date().toISOString(),
     });
+    if (result && totalCopies > 0) {
+      await this.addBookCopy(bookId, totalCopies);
+    }
+    return this.mapNeo4jToBook(result.records[0].get("b"));
+  }
+
+  async updateBook(bookId: string, updateBookDto: CreateBookDto) {
+    const pages = parseInt(updateBookDto.pages as unknown as string, 10) || 340;
+
+    const query = `
+      MATCH (b:Book { id: $bookId })
+      OPTIONAL MATCH (b)-[oldRel:BELONGS_TO]->(oldG:Genre)
+      SET
+        b.title = $title,
+        b.author = $author,
+        b.isbn = $isbn,
+        b.description = $description,
+        b.pages = $pages,
+        b.language = $language,
+        b.coverImage = $coverImage
+      WITH b, oldRel, oldG
+      // delete existing relationship only if it points to a different genre
+      FOREACH (_ IN CASE WHEN oldRel IS NOT NULL AND (oldG.name IS NULL OR oldG.name <> $genreName) THEN [1] ELSE [] END |
+        DELETE oldRel
+      )
+      MERGE (newG:Genre { name: $genreName })
+      MERGE (b)-[:BELONGS_TO]->(newG)
+      RETURN b
+    `;
+
+    const result = await this.neo4j.write(query, {
+      bookId,
+      title: updateBookDto.title,
+      author: updateBookDto.author,
+      isbn: updateBookDto.isbn,
+      description: updateBookDto.description,
+      genreName: updateBookDto.genre,
+      pages: pages,
+      language: updateBookDto.language,
+      coverImage: updateBookDto.coverImage,
+    });
+
     return this.mapNeo4jToBook(result.records[0].get("b"));
   }
 
@@ -126,16 +184,45 @@ export class BooksService {
         CREATE (bc:BookCopy {
           id: $copyId,
           status: 'AVAILABLE',
-          createdAt: datetime()
+          createdAt: $createdAt
         })
         CREATE (b)-[:HAS_COPY]->(bc)
         RETURN bc
       `;
 
-      await this.neo4j.write(query, { bookId, copyId });
+      await this.neo4j.write(query, {
+        bookId,
+        copyId,
+        createdAt: new Date().toISOString(),
+      });
     }
 
     return { bookId, copiesTotalAdded: quantity };
+  }
+
+  async removeBookCopies(bookId: string, quantity = 1) {
+    const query = `
+      MATCH (b:Book { id: $bookId })-[:HAS_COPY]->(bc:BookCopy)
+      WHERE bc.status = 'AVAILABLE'
+      WITH bc
+      ORDER BY bc.createdAt ASC
+      WITH collect(bc)[0..$quantity] AS toRemove
+      UNWIND toRemove AS rem
+      DETACH DELETE rem
+      RETURN count(rem) AS deleted
+    `;
+
+    const result = await this.neo4j.write(query, { bookId, quantity });
+    const rawDeleted =
+      result.records && result.records[0]
+        ? result.records[0].get("deleted")
+        : 0;
+    const deleted =
+      rawDeleted && typeof rawDeleted.toNumber === "function"
+        ? rawDeleted.toNumber()
+        : Number(rawDeleted) || 0;
+
+    return { bookId, deleted };
   }
 
   async getBook(bookId: string) {
@@ -191,7 +278,11 @@ export class BooksService {
     const result = await this.neo4j.read(searchQuery, { query, skip, limit });
 
     const toNumber = (v: any) =>
-      v && typeof v.toNumber === "function" ? v.toNumber() : v !== undefined && v !== null ? Number(v) : null;
+      v && typeof v.toNumber === "function"
+        ? v.toNumber()
+        : v !== undefined && v !== null
+          ? Number(v)
+          : null;
 
     return result.records.map((r: any) => {
       const bookNode = r.get("book");
@@ -206,9 +297,15 @@ export class BooksService {
         ...(bookNode && bookNode.properties ? bookNode.properties : {}),
         genre,
         totalCopies: copies.length,
-        availableCopies: copies.filter((c: any) => c.properties?.status === "AVAILABLE").length,
-        copies: copies.map((c: any) => ({ id: c.properties?.id, status: c.properties?.status })),
-        avgRating: rawAvg === null || rawAvg === undefined ? null : toNumber(rawAvg),
+        availableCopies: copies.filter(
+          (c: any) => c.properties?.status === "AVAILABLE"
+        ).length,
+        copies: copies.map((c: any) => ({
+          id: c.properties?.id,
+          status: c.properties?.status,
+        })),
+        avgRating:
+          rawAvg === null || rawAvg === undefined ? null : toNumber(rawAvg),
         borrowCount: toNumber(rawBorrowCount) ?? 0,
         reviewCount: toNumber(rawReviewCount) ?? 0,
       };

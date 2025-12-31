@@ -20,6 +20,15 @@ export class AnalyticsController {
     return this.analyticsService.getUserAnalytics(user.userId);
   }
 
+  @Get("summary")
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles("ADMIN")
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Platform summary: total borrows, reservations, users and avg borrow days (admin only)" })
+  async getPlatformSummary() {
+    return this.analyticsService.getPlatformSummary();
+  }
+
   @Get("trending-books")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth("access-token")

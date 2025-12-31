@@ -28,6 +28,9 @@ let AnalyticsController = class AnalyticsController {
     async getUserAnalytics(user) {
         return this.analyticsService.getUserAnalytics(user.userId);
     }
+    async getPlatformSummary() {
+        return this.analyticsService.getPlatformSummary();
+    }
     async getTrendingBooks() {
         return this.analyticsService.getTrendingBooks();
     }
@@ -61,6 +64,16 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getUserAnalytics", null);
+__decorate([
+    (0, common_1.Get)("summary"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, role_guard_1.RoleGuard),
+    (0, roles_decorator_1.Roles)("ADMIN"),
+    (0, swagger_1.ApiBearerAuth)("access-token"),
+    (0, swagger_1.ApiOperation)({ summary: "Platform summary: total borrows, reservations, users and avg borrow days (admin only)" }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getPlatformSummary", null);
 __decorate([
     (0, common_1.Get)("trending-books"),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

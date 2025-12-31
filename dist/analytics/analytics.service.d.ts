@@ -2,6 +2,12 @@ import { Neo4jService } from "../neo4j/neo4j.service";
 export declare class AnalyticsService {
     private neo4j;
     constructor(neo4j: Neo4jService);
+    getPlatformSummary(): Promise<{
+        totalActiveBorrows: any;
+        totalActiveReservations: any;
+        totalUsers: any;
+        avgBorrowDays: number;
+    }>;
     getUserAnalytics(userId: string): Promise<{
         borrowCount: any;
         reservationCount: any;

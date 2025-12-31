@@ -11,18 +11,12 @@ export class CreateBookDto {
   author: string
 
   @ApiProperty({ example: "978-3-16-148410-0" })
-  @IsISBN()
+  @IsString()
   isbn: string
 
   @ApiProperty()
   @IsString()
   description: string
-
-  @ApiProperty({ example: 2020 })
-  @IsNumber()
-  @Min(1800)
-  @Max(2100)
-  publicationYear: number
 
   @ApiProperty({ example: "Fantasy" })
   @IsString()
@@ -33,14 +27,13 @@ export class CreateBookDto {
   @IsOptional()
   coverImage?: string
 
-  @ApiProperty({ example: "Penguin Random House" })
-  @IsString()
-  publisher: string
-
   @ApiProperty({ example: 350 })
-  @IsNumber()
-  pages: number
+  @IsString()
+  pages: string = "340";
 
+  @ApiProperty({ example: 5 })
+  @IsString()
+  totalCopies: string = "5";
   @ApiProperty({ example: "English" })
   @IsString()
   language: string

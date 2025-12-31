@@ -13,6 +13,10 @@ exports.CreateBookDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 class CreateBookDto {
+    constructor() {
+        this.pages = "340";
+        this.totalCopies = "5";
+    }
 }
 exports.CreateBookDto = CreateBookDto;
 __decorate([
@@ -27,7 +31,7 @@ __decorate([
 ], CreateBookDto.prototype, "author", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: "978-3-16-148410-0" }),
-    (0, class_validator_1.IsISBN)(),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateBookDto.prototype, "isbn", void 0);
 __decorate([
@@ -35,13 +39,6 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateBookDto.prototype, "description", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ example: 2020 }),
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(1800),
-    (0, class_validator_1.Max)(2100),
-    __metadata("design:type", Number)
-], CreateBookDto.prototype, "publicationYear", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: "Fantasy" }),
     (0, class_validator_1.IsString)(),
@@ -54,15 +51,15 @@ __decorate([
     __metadata("design:type", String)
 ], CreateBookDto.prototype, "coverImage", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: "Penguin Random House" }),
+    (0, swagger_1.ApiProperty)({ example: 350 }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateBookDto.prototype, "publisher", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ example: 350 }),
-    (0, class_validator_1.IsNumber)(),
-    __metadata("design:type", Number)
 ], CreateBookDto.prototype, "pages", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 5 }),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateBookDto.prototype, "totalCopies", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: "English" }),
     (0, class_validator_1.IsString)(),

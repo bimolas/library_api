@@ -25,6 +25,7 @@ const uipdate_user_dto_1 = require("./dto/uipdate-user.dto");
 const platform_express_1 = require("@nestjs/platform-express");
 const path_1 = require("path");
 const multer_1 = require("multer");
+const ban_user_dto_1 = require("./dto/ban-user.dto");
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 let UsersController = class UsersController {
     constructor(usersService) {
@@ -32,6 +33,9 @@ let UsersController = class UsersController {
     }
     async getProfile(user) {
         return this.usersService.getUserProfile(user.userId);
+    }
+    async banUser(id, body) {
+        return this.usersService.banUser(id, body);
     }
     async getUserById(id) {
         return this.usersService.findById(id);
@@ -64,6 +68,19 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "getProfile", null);
+__decorate([
+    (0, common_1.Post)(":id/ban"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, role_guard_1.RoleGuard),
+    (0, roles_decorator_1.Roles)("ADMIN"),
+    (0, swagger_1.ApiBearerAuth)("access-token"),
+    (0, swagger_1.ApiOperation)({ summary: "Ban a user (admin only)" }),
+    (0, swagger_1.ApiBody)({ type: ban_user_dto_1.BanUserDto }),
+    __param(0, (0, common_1.Param)("id")),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, ban_user_dto_1.BanUserDto]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "banUser", null);
 __decorate([
     (0, common_1.Get)(":id"),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

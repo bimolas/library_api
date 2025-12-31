@@ -17,6 +17,12 @@ export declare class AnalyticsController {
         status: any;
         imageUrl: any;
     }>;
+    getPlatformSummary(): Promise<{
+        totalActiveBorrows: any;
+        totalActiveReservations: any;
+        totalUsers: any;
+        avgBorrowDays: number;
+    }>;
     getTrendingBooks(): Promise<{
         id: any;
         title: any;

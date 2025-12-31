@@ -1,9 +1,23 @@
 import { Neo4jService } from "../neo4j/neo4j.service";
 import type { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/uipdate-user.dto";
+import { BanUserDto } from "./dto/ban-user.dto";
 export declare class UsersService {
     private neo4j;
     constructor(neo4j: Neo4jService);
+    banUser(userId: string, dto: BanUserDto): Promise<{
+        id: any;
+        email: any;
+        name: any;
+        role: any;
+        score: number;
+        tier: any;
+        imageUrl: any;
+        createdAt: Date | null;
+        status: any;
+        banReason: any;
+        banUntil: Date | null;
+    }>;
     updateUser(id: string, updateUserDto: UpdateUserDto): Promise<{
         id: any;
         email: any;
@@ -12,8 +26,10 @@ export declare class UsersService {
         score: number;
         tier: any;
         imageUrl: any;
-        createdAt: Date;
+        createdAt: Date | null;
         status: any;
+        banReason: any;
+        banUntil: Date | null;
     }>;
     create(createUserDto: CreateUserDto): Promise<{
         id: any;
@@ -23,8 +39,10 @@ export declare class UsersService {
         score: number;
         tier: any;
         imageUrl: any;
-        createdAt: Date;
+        createdAt: Date | null;
         status: any;
+        banReason: any;
+        banUntil: Date | null;
     }>;
     createWithRole(createUserDto: any): Promise<{
         id: any;
@@ -34,8 +52,10 @@ export declare class UsersService {
         score: number;
         tier: any;
         imageUrl: any;
-        createdAt: Date;
+        createdAt: Date | null;
         status: any;
+        banReason: any;
+        banUntil: Date | null;
     }>;
     findByEmail(email: string): Promise<{
         id: any;
@@ -45,8 +65,10 @@ export declare class UsersService {
         score: number;
         tier: any;
         imageUrl: any;
-        createdAt: Date;
+        createdAt: Date | null;
         status: any;
+        banReason: any;
+        banUntil: Date | null;
     } | null>;
     findById(id: string): Promise<{
         id: any;
@@ -56,8 +78,10 @@ export declare class UsersService {
         score: number;
         tier: any;
         imageUrl: any;
-        createdAt: Date;
+        createdAt: Date | null;
         status: any;
+        banReason: any;
+        banUntil: Date | null;
     } | null>;
     getUserProfile(userId: string): Promise<{
         borrowCount: any;
@@ -69,8 +93,10 @@ export declare class UsersService {
         score: number;
         tier: any;
         imageUrl: any;
-        createdAt: Date;
+        createdAt: Date | null;
         status: any;
+        banReason: any;
+        banUntil: Date | null;
     }>;
     getAllUsers(limit?: number, skip?: number): Promise<{
         totalBorrows: any;
@@ -86,8 +112,10 @@ export declare class UsersService {
         score: number;
         tier: any;
         imageUrl: any;
-        createdAt: Date;
+        createdAt: Date | null;
         status: any;
+        banReason: any;
+        banUntil: Date | null;
     }[]>;
     updateScore(userId: string, newScore: number): Promise<{
         id: any;
@@ -97,8 +125,10 @@ export declare class UsersService {
         score: number;
         tier: any;
         imageUrl: any;
-        createdAt: Date;
+        createdAt: Date | null;
         status: any;
+        banReason: any;
+        banUntil: Date | null;
     }>;
     private mapNeo4jToUser;
     deleteUser(id: string): Promise<{

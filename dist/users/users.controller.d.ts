@@ -1,6 +1,7 @@
 import { UsersService } from "./users.service";
 import { CreateUserWithRoleDto } from "./dto/create-user-with-role.dto";
 import { UpdateUserDto } from "./dto/uipdate-user.dto";
+import { BanUserDto } from "./dto/ban-user.dto";
 export declare class UsersController {
     private usersService;
     constructor(usersService: UsersService);
@@ -14,8 +15,23 @@ export declare class UsersController {
         score: number;
         tier: any;
         imageUrl: any;
-        createdAt: Date;
+        createdAt: Date | null;
         status: any;
+        banReason: any;
+        banUntil: Date | null;
+    }>;
+    banUser(id: string, body: BanUserDto): Promise<{
+        id: any;
+        email: any;
+        name: any;
+        role: any;
+        score: number;
+        tier: any;
+        imageUrl: any;
+        createdAt: Date | null;
+        status: any;
+        banReason: any;
+        banUntil: Date | null;
     }>;
     getUserById(id: string): Promise<{
         id: any;
@@ -25,8 +41,10 @@ export declare class UsersController {
         score: number;
         tier: any;
         imageUrl: any;
-        createdAt: Date;
+        createdAt: Date | null;
         status: any;
+        banReason: any;
+        banUntil: Date | null;
     } | null>;
     getAllUsers(): Promise<{
         totalBorrows: any;
@@ -42,8 +60,10 @@ export declare class UsersController {
         score: number;
         tier: any;
         imageUrl: any;
-        createdAt: Date;
+        createdAt: Date | null;
         status: any;
+        banReason: any;
+        banUntil: Date | null;
     }[]>;
     createUser(createUserDto: CreateUserWithRoleDto): Promise<{
         id: any;
@@ -53,8 +73,10 @@ export declare class UsersController {
         score: number;
         tier: any;
         imageUrl: any;
-        createdAt: Date;
+        createdAt: Date | null;
         status: any;
+        banReason: any;
+        banUntil: Date | null;
     }>;
     updateUser(id: string, updateUserDto: UpdateUserDto, file: any): Promise<{
         id: any;
@@ -64,8 +86,10 @@ export declare class UsersController {
         score: number;
         tier: any;
         imageUrl: any;
-        createdAt: Date;
+        createdAt: Date | null;
         status: any;
+        banReason: any;
+        banUntil: Date | null;
     }>;
     deleteUser(id: string): Promise<{
         message: string;

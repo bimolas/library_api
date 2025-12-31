@@ -51,6 +51,32 @@ let UsersService = class UsersService {
     constructor(neo4j) {
         this.neo4j = neo4j;
     }
+    async banUser(userId, dto) {
+        const { reason, days, until } = dto;
+        const query = `
+      MATCH (u:User { id: $userId })
+      SET u.status = 'BANNED',
+          u.banReason = $reason,
+          u.banUntil = CASE
+            WHEN $until IS NOT NULL THEN datetime($until)
+            WHEN $days IS NOT NULL THEN datetime() + duration({ days: $days })
+            ELSE datetime() + duration({ days: 7 })
+          END
+      RETURN u
+    `;
+        const params = {
+            userId,
+            reason: reason ?? null,
+            days: days ?? null,
+            until: until ?? null,
+        };
+        const result = await this.neo4j.write(query, params);
+        if (!result.records || result.records.length === 0) {
+            throw new common_1.NotFoundException("User not found");
+        }
+        const userNode = result.records[0].get("u");
+        return this.mapNeo4jToUser(userNode);
+    }
     async updateUser(id, updateUserDto) {
         const existingUser = await this.findById(id);
         if (!existingUser) {
@@ -113,7 +139,7 @@ let UsersService = class UsersService {
             password: createUserDto.password,
             createdAt: new Date().toISOString(),
             score: 0,
-            status: 'ACTIVE',
+            status: "ACTIVE",
         });
         return this.mapNeo4jToUser(result.records[0].get("u"));
     }
@@ -146,7 +172,7 @@ let UsersService = class UsersService {
             role: createUserDto.role,
             createdAt: new Date().toISOString(),
             score: 0,
-            status: 'ACTIVE',
+            status: "ACTIVE",
         });
         return this.mapNeo4jToUser(result.records[0].get("u"));
     }
@@ -227,8 +253,12 @@ let UsersService = class UsersService {
             const activeBorrows = toNum(r.get("activeBorrows"));
             const completedBorrows = toNum(r.get("completedBorrows"));
             const onTimeReturns = toNum(r.get("onTimeReturns"));
-            const maxActiveBorrowDays = r.get("maxActiveBorrowDays") === null ? 0 : toNum(r.get("maxActiveBorrowDays"));
-            const onTimeReturnPercent = completedBorrows > 0 ? Math.round((onTimeReturns / completedBorrows) * 10000) / 100 : 0;
+            const maxActiveBorrowDays = r.get("maxActiveBorrowDays") === null
+                ? 0
+                : toNum(r.get("maxActiveBorrowDays"));
+            const onTimeReturnPercent = completedBorrows > 0
+                ? Math.round((onTimeReturns / completedBorrows) * 10000) / 100
+                : 0;
             return {
                 ...this.mapNeo4jToUser(userNode),
                 totalBorrows,
@@ -282,6 +312,12 @@ let UsersService = class UsersService {
             : createdAtRaw
                 ? new Date(createdAtRaw)
                 : null;
+        const banUntilRaw = node.properties?.banUntil;
+        const banUntil = banUntilRaw && typeof banUntilRaw.toString === "function"
+            ? new Date(banUntilRaw.toString())
+            : banUntilRaw
+                ? new Date(banUntilRaw)
+                : null;
         return {
             id: node.properties.id,
             email: node.properties.email,
@@ -290,8 +326,10 @@ let UsersService = class UsersService {
             score: scoreNum,
             tier: node.properties.tier,
             imageUrl: node.properties.imageUrl ?? null,
-            createdAt: new Date(node.properties.createdAt),
+            createdAt: createdAt,
             status: node?.properties?.status ?? "ACTIVE",
+            banReason: node.properties.banReason ?? null,
+            banUntil: banUntil,
         };
     }
     async deleteUser(id) {

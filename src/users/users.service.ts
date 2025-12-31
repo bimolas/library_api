@@ -1,13 +1,50 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { Neo4jService } from "../neo4j/neo4j.service";
 import type { CreateUserDto } from "./dto/create-user.dto";
 import { v4 as uuid } from "uuid";
 import { CreateUserWithRoleDto } from "./dto/create-user-with-role.dto";
 import * as bcrypt from "bcryptjs";
 import { UpdateUserDto } from "./dto/uipdate-user.dto";
+import { BanUserDto } from "./dto/ban-user.dto";
 @Injectable()
 export class UsersService {
   constructor(private neo4j: Neo4jService) {}
+
+  async banUser(userId: string, dto: BanUserDto) {
+    const { reason, days, until } = dto;
+
+    const query = `
+      MATCH (u:User { id: $userId })
+      SET u.status = 'BANNED',
+          u.banReason = $reason,
+          u.banUntil = CASE
+            WHEN $until IS NOT NULL THEN datetime($until)
+            WHEN $days IS NOT NULL THEN datetime() + duration({ days: $days })
+            ELSE datetime() + duration({ days: 7 })
+          END
+      RETURN u
+    `;
+
+    const params = {
+      userId,
+      reason: reason ?? null,
+      days: days ?? null,
+      until: until ?? null,
+    };
+
+    const result = await this.neo4j.write(query, params);
+
+    if (!result.records || result.records.length === 0) {
+      throw new NotFoundException("User not found");
+    }
+
+    const userNode = result.records[0].get("u");
+    return this.mapNeo4jToUser(userNode);
+  }
 
   async updateUser(id: string, updateUserDto: UpdateUserDto) {
     const existingUser = await this.findById(id);
@@ -76,7 +113,7 @@ export class UsersService {
       password: createUserDto.password,
       createdAt: new Date().toISOString(),
       score: 0,
-      status: 'ACTIVE',
+      status: "ACTIVE",
     });
 
     return this.mapNeo4jToUser(result.records[0].get("u"));
@@ -113,7 +150,7 @@ export class UsersService {
       role: createUserDto.role,
       createdAt: new Date().toISOString(),
       score: 0,
-      status: 'ACTIVE',
+      status: "ACTIVE",
     });
 
     return this.mapNeo4jToUser(result.records[0].get("u"));
@@ -131,7 +168,7 @@ export class UsersService {
       createdAt: node.properties.createdAt,
       password: node.properties.password,
       imageUrl: node.properties.imageUrl,
-  });
+    });
     const result = await this.neo4j.read(query, { email });
 
     if (result.records.length === 0) return null;
@@ -166,7 +203,7 @@ export class UsersService {
     };
   }
 
-async getAllUsers(limit: number = 100, skip: number = 0) {
+  async getAllUsers(limit: number = 100, skip: number = 0) {
     const query = `
       MATCH (u:User)
       OPTIONAL MATCH (u)-[:BORROWED]->(borrow:Borrow)
@@ -204,10 +241,15 @@ async getAllUsers(limit: number = 100, skip: number = 0) {
       const activeBorrows = toNum(r.get("activeBorrows"));
       const completedBorrows = toNum(r.get("completedBorrows"));
       const onTimeReturns = toNum(r.get("onTimeReturns"));
-      const maxActiveBorrowDays = r.get("maxActiveBorrowDays") === null ? 0 : toNum(r.get("maxActiveBorrowDays"));
+      const maxActiveBorrowDays =
+        r.get("maxActiveBorrowDays") === null
+          ? 0
+          : toNum(r.get("maxActiveBorrowDays"));
 
       const onTimeReturnPercent =
-        completedBorrows > 0 ? Math.round((onTimeReturns / completedBorrows) * 10000) / 100 : 0;
+        completedBorrows > 0
+          ? Math.round((onTimeReturns / completedBorrows) * 10000) / 100
+          : 0;
 
       return {
         ...this.mapNeo4jToUser(userNode),
@@ -220,7 +262,7 @@ async getAllUsers(limit: number = 100, skip: number = 0) {
       };
     });
   }
-  
+
   async updateScore(userId: string, newScore: number) {
     const query = `
       MATCH (u:User { id: $userId })
@@ -263,7 +305,14 @@ async getAllUsers(limit: number = 100, skip: number = 0) {
         : createdAtRaw
           ? new Date(createdAtRaw)
           : null;
-
+          
+    const banUntilRaw = node.properties?.banUntil;
+    const banUntil =
+      banUntilRaw && typeof banUntilRaw.toString === "function"
+        ? new Date(banUntilRaw.toString())
+        : banUntilRaw
+          ? new Date(banUntilRaw)
+          : null;
     return {
       id: node.properties.id,
       email: node.properties.email,
@@ -272,8 +321,10 @@ async getAllUsers(limit: number = 100, skip: number = 0) {
       score: scoreNum,
       tier: node.properties.tier,
       imageUrl: node.properties.imageUrl ?? null,
-      createdAt : new Date(node.properties.createdAt),
+      createdAt: createdAt,
       status: node?.properties?.status ?? "ACTIVE",
+      banReason: node.properties.banReason ?? null,
+      banUntil: banUntil,
     };
   }
 
