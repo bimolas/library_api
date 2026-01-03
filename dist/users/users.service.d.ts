@@ -5,6 +5,19 @@ import { BanUserDto } from "./dto/ban-user.dto";
 export declare class UsersService {
     private neo4j;
     constructor(neo4j: Neo4jService);
+    unbanUser(id: string): Promise<{
+        id: any;
+        email: any;
+        name: any;
+        role: any;
+        score: number;
+        tier: any;
+        imageUrl: any;
+        createdAt: Date | null;
+        status: any;
+        banReason: any;
+        banUntil: Date | null;
+    }>;
     banUser(userId: string, dto: BanUserDto): Promise<{
         id: any;
         email: any;

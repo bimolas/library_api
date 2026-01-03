@@ -51,6 +51,21 @@ let UsersService = class UsersService {
     constructor(neo4j) {
         this.neo4j = neo4j;
     }
+    async unbanUser(id) {
+        const query = `
+      MATCH (u:User { id: $userId })
+      SET u.status = 'ACTIVE',
+          u.banReason = NULL,
+          u.banUntil = NULL
+      RETURN u
+    `;
+        const result = await this.neo4j.write(query, { userId: id });
+        if (!result.records || result.records.length === 0) {
+            throw new common_1.NotFoundException("User not found");
+        }
+        const userNode = result.records[0].get("u");
+        return this.mapNeo4jToUser(userNode);
+    }
     async banUser(userId, dto) {
         const { reason, days, until } = dto;
         const query = `

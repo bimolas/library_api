@@ -33,6 +33,19 @@ export declare class UsersController {
         banReason: any;
         banUntil: Date | null;
     }>;
+    unbanUser(id: string): Promise<{
+        id: any;
+        email: any;
+        name: any;
+        role: any;
+        score: number;
+        tier: any;
+        imageUrl: any;
+        createdAt: Date | null;
+        status: any;
+        banReason: any;
+        banUntil: Date | null;
+    }>;
     getUserById(id: string): Promise<{
         id: any;
         email: any;

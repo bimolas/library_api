@@ -49,6 +49,15 @@ export class UsersController {
     return this.usersService.banUser(id, body);
   }
 
+  @Post(":id/unban")
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles("ADMIN")
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Unban a user (admin only)" })
+  async unbanUser(@Param("id") id: string) {
+    return this.usersService.unbanUser(id);
+  }
+
   @Get(":id")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth("access-token")
@@ -75,6 +84,9 @@ export class UsersController {
   async createUser(@Body() createUserDto: CreateUserWithRoleDto) {
     return this.usersService.createWithRole(createUserDto);
   }
+
+
+  
 
   @Put(":id")
   @UseGuards(JwtAuthGuard, RoleGuard)

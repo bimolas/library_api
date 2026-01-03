@@ -14,6 +14,26 @@ import { BanUserDto } from "./dto/ban-user.dto";
 export class UsersService {
   constructor(private neo4j: Neo4jService) {}
 
+
+  async unbanUser(id: string) {
+    const query = `
+      MATCH (u:User { id: $userId })
+      SET u.status = 'ACTIVE',
+          u.banReason = NULL,
+          u.banUntil = NULL
+      RETURN u
+    `;
+
+    const result = await this.neo4j.write(query, { userId: id });
+
+    if (!result.records || result.records.length === 0) {
+      throw new NotFoundException("User not found");
+    }
+
+    const userNode = result.records[0].get("u");
+    return this.mapNeo4jToUser(userNode);
+  }
+
   async banUser(userId: string, dto: BanUserDto) {
     const { reason, days, until } = dto;
 
@@ -151,8 +171,8 @@ export class UsersService {
       createdAt: new Date().toISOString(),
       score: 0,
       status: "ACTIVE",
-    });
-
+    }); 
+ 
     return this.mapNeo4jToUser(result.records[0].get("u"));
   }
 
@@ -259,6 +279,7 @@ export class UsersService {
         onTimeReturns,
         onTimeRate: onTimeReturnPercent,
         maxActiveBorrowDays, // number of days (integer) of the longest active borrow period (0 if none)
+
       };
     });
   }
@@ -337,3 +358,4 @@ export class UsersService {
     return { message: "User deleted successfully" };
   }
 }
+ 

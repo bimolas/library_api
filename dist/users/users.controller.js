@@ -37,6 +37,9 @@ let UsersController = class UsersController {
     async banUser(id, body) {
         return this.usersService.banUser(id, body);
     }
+    async unbanUser(id) {
+        return this.usersService.unbanUser(id);
+    }
     async getUserById(id) {
         return this.usersService.findById(id);
     }
@@ -81,6 +84,17 @@ __decorate([
     __metadata("design:paramtypes", [String, ban_user_dto_1.BanUserDto]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "banUser", null);
+__decorate([
+    (0, common_1.Post)(":id/unban"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, role_guard_1.RoleGuard),
+    (0, roles_decorator_1.Roles)("ADMIN"),
+    (0, swagger_1.ApiBearerAuth)("access-token"),
+    (0, swagger_1.ApiOperation)({ summary: "Unban a user (admin only)" }),
+    __param(0, (0, common_1.Param)("id")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "unbanUser", null);
 __decorate([
     (0, common_1.Get)(":id"),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

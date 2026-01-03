@@ -42,6 +42,11 @@ export class AuthService {
     if(user.role !== signInDto.role){
       throw new UnauthorizedException("Invalid credentials");
     }
+
+    if(user.status === "BANNED"){
+      throw new UnauthorizedException("User is banned until " + user.banUntil + " for reason: " + user.banReason);
+    } 
+     
     const isPasswordValid = await bcrypt.compare(
       signInDto.password,
       (user as any).password

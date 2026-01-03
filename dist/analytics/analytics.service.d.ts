@@ -8,6 +8,31 @@ export declare class AnalyticsService {
         totalUsers: any;
         avgBorrowDays: number;
     }>;
+    getBookAvailability(id: string): Promise<{
+        id: any;
+        title: any;
+        author: any;
+        description: any;
+        publicationYear: any;
+        totalCopies: any;
+        availableCopies: any;
+        borrows: {
+            id: any;
+            userId: any;
+            userName: any;
+            borrowDate: any;
+            dueDate: any;
+            status: any;
+        }[];
+        reservations: {
+            id: any;
+            userId: any;
+            userName: any;
+            reservedAt: any;
+            endDate: any;
+            status: any;
+        }[];
+    } | null>;
     getUserAnalytics(userId: string): Promise<{
         borrowCount: any;
         reservationCount: any;

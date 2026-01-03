@@ -29,6 +29,14 @@ export class AnalyticsController {
     return this.analyticsService.getPlatformSummary();
   }
 
+  @Get("book/:id/availability")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Get book availability analytics" })
+  async getBookAvailability(@Param("id") id: string) {
+    return this.analyticsService.getBookAvailability(id);
+  }
+
   @Get("trending-books")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth("access-token")

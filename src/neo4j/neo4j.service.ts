@@ -7,12 +7,12 @@ const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD || "password";
 export class Neo4jService implements OnModuleInit, OnModuleDestroy {
   private driver: Driver;
   session: any;
-
+ 
   async onModuleInit() {
     this.driver = neo4j.driver(
       NEO4J_URI,
       neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD)
-    );
+    ); 
 
     this.session = this.driver.session();
     await this.verifyConnection();

@@ -3,6 +3,7 @@ import { Neo4jService } from "../neo4j/neo4j.service";
 
 @Injectable()
 export class AnalyticsService {
+ 
   constructor(private neo4j: Neo4jService) {}
 async getPlatformSummary() {
     const query = `
@@ -87,6 +88,102 @@ async getPlatformSummary() {
       avgBorrowDays,
     };
   }
+
+ // ...existing code...
+  async getBookAvailability(id: string) {
+    const query = `
+      MATCH (book:Book { id: $id })
+      OPTIONAL MATCH (book)-[:HAS_COPY]->(bc:BookCopy)
+      WITH book, COLLECT(bc) AS copies
+
+      OPTIONAL MATCH (userBorrow:User)-[:BORROWED]->(br:Borrow)-[:OF_COPY]->(:BookCopy)<-[:HAS_COPY]-(book)
+      WHERE br.status = 'ACTIVE'
+      WITH book, copies, COLLECT(DISTINCT {
+        id: br.id,
+        userId: userBorrow.id,
+        userName: userBorrow.name,
+        borrowDate: br.borrowDate,
+        dueDate: br.dueDate,
+        status: br.status
+      }) AS borrows
+
+      OPTIONAL MATCH (userRes:User)-[:RESERVED]->(res:Reservation)-[:OF_BOOK]->(book)
+      WHERE res.status = 'ACTIVE'
+      WITH book, copies, borrows, COLLECT(DISTINCT {
+        id: res.id,
+        userId: userRes.id,
+        userName: userRes.name,
+        reservedAt: res.createdAt,
+        status: res.status,
+        endDate: res.endDate
+      }) AS reservations
+
+      RETURN book { .id, .title, .author, .description, .publicationYear } AS book,
+             size(copies) AS totalCopies,
+             size([c IN copies WHERE c.status = 'AVAILABLE']) AS availableCopies,
+             borrows,
+             reservations
+    `;
+
+    const result = await this.neo4j.read(query, { id });
+    if (!result.records || result.records.length === 0) return null;
+
+    const rec = result.records[0];
+    const raw = rec.get("book") || {};
+    const rawTotal = rec.get("totalCopies");
+    const rawAvailable = rec.get("availableCopies");
+    const rawBorrows = rec.get("borrows") || [];
+    const rawReservations = rec.get("reservations") || [];
+
+    const toNumber = (v: any) =>
+      v && typeof v.toNumber === "function" ? v.toNumber() : v !== undefined && v !== null ? Number(v) : 0;
+
+    const toStringDate = (v: any) =>
+      v && typeof v.toString === "function" ? v.toString() : v ?? null;
+
+    const totalCopies =
+      rawTotal && typeof rawTotal.toNumber === "function" ? rawTotal.toNumber() : Number(rawTotal) || 0;
+    const availableCopies =
+      rawAvailable && typeof rawAvailable.toNumber === "function"
+        ? rawAvailable.toNumber()
+        : Number(rawAvailable) || 0;
+
+    const borrows = Array.isArray(rawBorrows)
+      ? rawBorrows.map((b: any) => ({
+          id: b.id ?? null,
+          userId: b.userId ?? null,
+          userName: b.userName ?? null,
+          borrowDate: toStringDate(b.borrowDate),
+          dueDate: toStringDate(b.dueDate),
+          status: b.status ?? null,
+        }))
+      : [];
+
+    const reservations = Array.isArray(rawReservations)
+      ? rawReservations.map((r: any) => ({
+          id: r.id ?? null,
+          userId: r.userId ?? null,
+          userName: r.userName ?? null,
+          reservedAt: toStringDate(r.reservedAt),
+          endDate: toStringDate(r.endDate),
+          status: r.status ?? null,
+        }))
+      : [];
+
+    return {
+      id: raw.id,
+      title: raw.title,
+      author: raw.author,
+      description: raw.description,
+      publicationYear: raw.publicationYear,
+      totalCopies,
+      availableCopies,
+      borrows,       // only ACTIVE borrows
+      reservations,  // only ACTIVE reservations
+    };
+  }
+// ...existing code...
+
   async getUserAnalytics(userId: string) {
     const query = `
       MATCH (u:User { id: $userId })
