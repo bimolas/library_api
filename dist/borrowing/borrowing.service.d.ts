@@ -37,6 +37,29 @@ export declare class BorrowingService {
         };
     }[]>;
     getActiveBorrowCount(userId: string): Promise<number>;
+    getLatestBorrowsByNearbyScores(userId: string, tolerance?: number, limit?: number): Promise<{
+        user: {
+            id: any;
+            name: any;
+            email: any;
+            score: any;
+            tier: any;
+        };
+        borrow: {
+            id: any;
+            borrowDate: any;
+            dueDate: any;
+            returnDate: any;
+            status: any;
+        };
+        book: {
+            id: any;
+            title: any;
+            author: any;
+            rating: number | null;
+            reviewCount: any;
+        };
+    }[]>;
     getOverdueBooks(userId: string): Promise<{
         id: any;
         book: any;

@@ -1,4 +1,12 @@
-import { Controller, Post, Get, Param, UseGuards, Body } from "@nestjs/common";
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  UseGuards,
+  Body,
+  Query,
+} from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody } from "@nestjs/swagger";
 import { BorrowingService } from "./borrowing.service";
 import { CreateBorrowDto } from "./dto/create-borrow.dto";
@@ -15,7 +23,10 @@ export class BorrowingController {
   @ApiBearerAuth("access-token")
   @ApiOperation({ summary: "Borrow a book" })
   @ApiBody({ type: CreateBorrowDto })
-  async borrowBook(@Body() createBorrowDto: CreateBorrowDto, @CurrentUser() user: any) {
+  async borrowBook(
+    @Body() createBorrowDto: CreateBorrowDto,
+    @CurrentUser() user: any
+  ) {
     return this.borrowingService.borrowBook(user.userId, createBorrowDto);
   }
 
@@ -49,5 +60,25 @@ export class BorrowingController {
   @ApiOperation({ summary: "Get overdue books" })
   async getOverdueBooks(@CurrentUser() user: any) {
     return this.borrowingService.getOverdueBooks(user.userId);
+  }
+
+  @Get("nearby-latest")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({
+    summary: "Get latest borrowings from users with score close to yours",
+  })
+  async getNearbyLatestBorrows(
+    @CurrentUser() user: any,
+    @Query("tolerance") tolerance?: string,
+    @Query("limit") limit?: string
+  ) {
+    const tol = tolerance ? parseFloat(tolerance) : 10;
+    const lim = limit ? parseInt(limit, 10) : 10;
+    return this.borrowingService.getLatestBorrowsByNearbyScores(
+      user.userId,
+      tol,
+      lim
+    );
   }
 }

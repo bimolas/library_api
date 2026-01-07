@@ -38,6 +38,11 @@ let BorrowingController = class BorrowingController {
     async getOverdueBooks(user) {
         return this.borrowingService.getOverdueBooks(user.userId);
     }
+    async getNearbyLatestBorrows(user, tolerance, limit) {
+        const tol = tolerance ? parseFloat(tolerance) : 10;
+        const lim = limit ? parseInt(limit, 10) : 10;
+        return this.borrowingService.getLatestBorrowsByNearbyScores(user.userId, tol, lim);
+    }
 };
 exports.BorrowingController = BorrowingController;
 __decorate([
@@ -93,6 +98,20 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], BorrowingController.prototype, "getOverdueBooks", null);
+__decorate([
+    (0, common_1.Get)("nearby-latest"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)("access-token"),
+    (0, swagger_1.ApiOperation)({
+        summary: "Get latest borrowings from users with score close to yours",
+    }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Query)("tolerance")),
+    __param(2, (0, common_1.Query)("limit")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String]),
+    __metadata("design:returntype", Promise)
+], BorrowingController.prototype, "getNearbyLatestBorrows", null);
 exports.BorrowingController = BorrowingController = __decorate([
     (0, swagger_1.ApiTags)("Borrowing"),
     (0, common_1.Controller)("borrowing"),

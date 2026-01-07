@@ -136,6 +136,79 @@ let BorrowingService = class BorrowingService {
         const result = await this.neo4j.read(query, { userId });
         return result.records[0].get("count").toNumber();
     }
+    async getLatestBorrowsByNearbyScores(userId, tolerance = 10, limit = 10) {
+        const scoreQuery = `MATCH (u:User { id: $userId }) RETURN u.score AS score`;
+        const scoreRes = await this.neo4j.read(scoreQuery, { userId });
+        if (!scoreRes.records || scoreRes.records.length === 0)
+            return [];
+        const rawScore = scoreRes.records[0].get("score");
+        const toNumber = (v) => v && typeof v.toNumber === "function" ? v.toNumber() : v !== undefined && v !== null ? Number(v) : 0;
+        const userScore = toNumber(rawScore);
+        const query = `
+      MATCH (other:User)
+      WHERE other.id <> $userId AND abs(toFloat(other.score) - $userScore) <= $tolerance
+      OPTIONAL MATCH (other)-[:BORROWED]->(br:Borrow)-[:OF_COPY]->(bc:BookCopy)<-[:HAS_COPY]-(book:Book)
+      WITH other, br, book
+      ORDER BY datetime(br.borrowDate) DESC
+      WITH other, head(collect(br)) AS lastBorrow, head(collect(book)) AS lastBook
+      WHERE lastBorrow IS NOT NULL
+      OPTIONAL MATCH (lastBook)<-[:ON]-(rev:Review)
+      WITH other, lastBorrow, lastBook, AVG(rev.rating) AS avgRating, COUNT(DISTINCT rev) AS reviewCount
+      RETURN other { .id, .name, .email, .score, .tier } AS user,
+             lastBorrow { .id, .borrowDate, .dueDate, .returnDate, .status } AS borrow,
+             lastBook { .id, .title, .author } AS book,
+             avgRating,
+             reviewCount
+      ORDER BY datetime(lastBorrow.borrowDate) DESC
+      LIMIT $limit
+    `;
+        const result = await this.neo4j.read(query, {
+            userId,
+            userScore,
+            tolerance,
+            limit,
+        });
+        return result.records.map((r) => {
+            const u = r.get("user") || {};
+            const b = r.get("borrow") || {};
+            const bk = r.get("book") || {};
+            const rawAvg = r.get("avgRating");
+            const rawReviewCount = r.get("reviewCount");
+            const toStrDate = (v) => (v && typeof v.toString === "function" ? v.toString() : v ?? null);
+            const scoreVal = u.score && typeof u.score.toNumber === "function" ? u.score.toNumber() : Number(u.score) || 0;
+            const avgRating = rawAvg === null || rawAvg === undefined
+                ? null
+                : typeof rawAvg.toNumber === "function"
+                    ? Math.round(rawAvg.toNumber() * 100) / 100
+                    : Math.round(Number(rawAvg) * 100) / 100;
+            const reviewCount = rawReviewCount && typeof rawReviewCount.toNumber === "function"
+                ? rawReviewCount.toNumber()
+                : Number(rawReviewCount) || 0;
+            return {
+                user: {
+                    id: u.id ?? null,
+                    name: u.name ?? null,
+                    email: u.email ?? null,
+                    score: scoreVal,
+                    tier: u.tier ?? null,
+                },
+                borrow: {
+                    id: b.id ?? null,
+                    borrowDate: toStrDate(b.borrowDate),
+                    dueDate: toStrDate(b.dueDate),
+                    returnDate: toStrDate(b.returnDate),
+                    status: b.status ?? null,
+                },
+                book: {
+                    id: bk.id ?? null,
+                    title: bk.title ?? null,
+                    author: bk.author ?? null,
+                    rating: avgRating,
+                    reviewCount,
+                },
+            };
+        });
+    }
     async getOverdueBooks(userId) {
         const now = new Date().toISOString();
         const query = `

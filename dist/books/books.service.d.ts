@@ -90,6 +90,10 @@ export declare class BooksService {
         reviewCount: any;
     }>;
     searchBooks(query: string, limit?: number, skip?: number): Promise<{
+        borrowedCopies: any;
+        activeReservations: any;
+        demandPressure: any;
+        highDemand: boolean;
         id: any;
         title: any;
         author: any;

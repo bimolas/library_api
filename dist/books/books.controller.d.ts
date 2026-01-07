@@ -27,7 +27,7 @@ export declare class BooksController {
         borrowCount: any;
         reviewCount: any;
     }>;
-    updateBook(bookId: string, updateBookDto: CreateBookDto, file: any): Promise<{
+    updateBook(bookId: string, updateBookDto: CreateBookDto, file?: any): Promise<{
         id: any;
         title: any;
         author: any;
@@ -59,6 +59,10 @@ export declare class BooksController {
         deleted: any;
     }>;
     searchBooks(query: string, limit?: number, skip?: number): Promise<{
+        borrowedCopies: any;
+        activeReservations: any;
+        demandPressure: any;
+        highDemand: boolean;
         id: any;
         title: any;
         author: any;

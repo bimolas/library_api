@@ -5,7 +5,6 @@ import { randomUUID as uuid } from "crypto";
 
 @Injectable()
 export class BooksService {
- 
   constructor(private neo4j: Neo4jService) {}
 
   async deleteBook(bookId: string) {
@@ -257,20 +256,43 @@ export class BooksService {
     };
   }
 
+  // ...existing code...
   async searchBooks(query: string, limit = 20, skip = 0) {
     const searchQuery = `
       MATCH (b:Book)
       OPTIONAL MATCH (b)-[:BELONGS_TO]->(g:Genre)
       OPTIONAL MATCH (b)-[:HAS_COPY]->(bc:BookCopy)
       OPTIONAL MATCH (bc)<-[:OF_COPY]-(br:Borrow)
+      OPTIONAL MATCH (bc)<-[:OF_COPY]-(brActive:Borrow { status: 'ACTIVE' })
+      OPTIONAL MATCH (b)<-[:OF_BOOK]-(res:Reservation { status: 'ACTIVE' })
       OPTIONAL MATCH (b)<-[:ON]-(rev:Review)
       WHERE
         b.title CONTAINS $query OR
         b.author CONTAINS $query OR
         b.isbn CONTAINS $query OR
         (g.name IS NOT NULL AND g.name CONTAINS $query)
-      WITH b, g, COLLECT(DISTINCT bc) AS copies, AVG(rev.rating) AS avgRating, COUNT(DISTINCT br) AS borrowCount, COUNT(DISTINCT rev) AS reviewCount
-      RETURN b AS book, g.name AS genre, copies AS copies, avgRating AS avgRating, borrowCount AS borrowCount, reviewCount AS reviewCount
+      WITH b, g, COLLECT(DISTINCT bc) AS copies,
+           AVG(rev.rating) AS avgRating,
+           COUNT(DISTINCT br) AS borrowCount,
+           COUNT(DISTINCT rev) AS reviewCount,
+           COUNT(DISTINCT brActive) AS borrowedCopies,
+           COUNT(DISTINCT res) AS activeReservations
+      RETURN b AS book,
+             g.name AS genre,
+             copies AS copies,
+             avgRating AS avgRating,
+             borrowCount AS borrowCount,
+             reviewCount AS reviewCount,
+             borrowedCopies AS borrowedCopies,
+             activeReservations AS activeReservations,
+             // demand pressure = percentage of copies currently in demand (borrowed + active reservations) / total copies
+             CASE WHEN size(copies) = 0 THEN 0
+                  ELSE ROUND(((toFloat(borrowedCopies) + toFloat(activeReservations)) / toFloat(size(copies))) * 100.0, 2)
+             END AS demandPressure,
+             CASE WHEN size(copies) = 0 THEN false
+                  WHEN ((toFloat(borrowedCopies) + toFloat(activeReservations)) / toFloat(size(copies))) >= 0.7 THEN true
+                  ELSE false
+             END AS highDemand
       SKIP $skip
       LIMIT $limit
     `;
@@ -291,6 +313,10 @@ export class BooksService {
       const rawAvg = r.get("avgRating");
       const rawBorrowCount = r.get("borrowCount");
       const rawReviewCount = r.get("reviewCount");
+      const rawBorrowedCopies = r.get("borrowedCopies");
+      const rawActiveReservations = r.get("activeReservations");
+      const rawDemandPressure = r.get("demandPressure");
+      const rawHighDemand = r.get("highDemand");
 
       // build a node-like object compatible with mapNeo4jToBook
       const properties = {
@@ -310,10 +336,37 @@ export class BooksService {
         reviewCount: toNumber(rawReviewCount) ?? 0,
       };
 
-      return this.mapNeo4jToBook({ properties } as any);
+      const mapped = this.mapNeo4jToBook({ properties } as any);
+
+      // attach demand-related fields
+      const borrowedCopies =
+        rawBorrowedCopies && typeof rawBorrowedCopies.toNumber === "function"
+          ? rawBorrowedCopies.toNumber()
+          : Number(rawBorrowedCopies) || 0;
+      const activeReservations =
+        rawActiveReservations &&
+        typeof rawActiveReservations.toNumber === "function"
+          ? rawActiveReservations.toNumber()
+          : Number(rawActiveReservations) || 0;
+      const demandPressure =
+        rawDemandPressure && typeof rawDemandPressure.toNumber === "function"
+          ? rawDemandPressure.toNumber()
+          : rawDemandPressure !== undefined && rawDemandPressure !== null
+            ? Number(rawDemandPressure)
+            : 0;
+      const highDemand =
+        mapped.availableCopies <= 2 && mapped.totalCopies > 0 ? true : false;
+
+      return {
+        ...mapped,
+        borrowedCopies,
+        activeReservations,
+        demandPressure, // percentage 0-100
+        highDemand, // boolean: needs more copies when true
+      };
     });
   }
-
+  // ...existing code...
   async getAvailableCopies(bookId: string) {
     const query = `
       MATCH (b:Book { id: $bookId })-[:HAS_COPY]->(bc:BookCopy { status: 'AVAILABLE' })

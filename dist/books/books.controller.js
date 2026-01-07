@@ -46,10 +46,11 @@ let BooksController = class BooksController {
         return this.booksService.createBook(createBookDto);
     }
     async updateBook(bookId, updateBookDto, file) {
-        if (!file)
-            throw new common_1.BadRequestException("No file uploaded");
-        const avatarPath = `${BASE_URL}/uploads/books/${file.filename}`;
-        updateBookDto.coverImage = avatarPath;
+        console.log("Updating book with ID:", bookId);
+        if (file) {
+            const avatarPath = `${BASE_URL}/uploads/books/${file.filename}`;
+            updateBookDto.coverImage = avatarPath;
+        }
         return this.booksService.updateBook(bookId, updateBookDto);
     }
     async addCopies(bookId, body) {

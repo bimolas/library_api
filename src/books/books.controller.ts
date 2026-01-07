@@ -95,11 +95,13 @@ export class BooksController {
       }),
     })
   )
-  async updateBook(@Param("id") bookId: string, @Body() updateBookDto: CreateBookDto, @UploadedFile() file: any) {
-    if (!file) throw new BadRequestException("No file uploaded");
+  async updateBook(@Param("id") bookId: string, @Body() updateBookDto: CreateBookDto, @UploadedFile() file?: any) {
+    console.log("Updating book with ID:", bookId);
+    if (file){
     const avatarPath = `${BASE_URL}/uploads/books/${file.filename}`;
-
     updateBookDto.coverImage = avatarPath;
+    }
+
     return this.booksService.updateBook(bookId, updateBookDto);
   }
 
