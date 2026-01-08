@@ -141,14 +141,24 @@ export class BooksController {
   @Get("search")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth("access-token")
-  @ApiQuery({ name: "q", required: true })
+  @ApiQuery({ name: "q",})
+  @ApiQuery({ name: "limit", required: false })
+  @ApiQuery({ name: "skip", required: false })
   @ApiOperation({ summary: "Search books by title, author, or ISBN" })
   async searchBooks(
     @Query("q") query: string,
-    @Query("limit") limit = 20,
+    @Query("limit") limit = 100,
     @Query("skip") skip = 0
   ) {
     return this.booksService.searchBooks(query, limit, skip);
+  } 
+
+  @Get("seed-data")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Seed books data" })
+  async searchBookss() {
+    return await this.booksService.getSeedData();
   }
 
   @Get(":id")
@@ -177,8 +187,12 @@ export class BooksController {
   }
 
   @Get(":id/comments")
+   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("access-token")
   @ApiOperation({ summary: "Get all comments for a book" })
   async getComments(@Param("id") bookId: string) {
     return this.booksService.getComments(bookId);
   }
+
+  
 }

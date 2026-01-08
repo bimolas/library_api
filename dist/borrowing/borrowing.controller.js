@@ -43,6 +43,10 @@ let BorrowingController = class BorrowingController {
         const lim = limit ? parseInt(limit, 10) : 10;
         return this.borrowingService.getLatestBorrowsByNearbyScores(user.userId, tol, lim);
     }
+    async getMonthlyStatsLast(months) {
+        const m = months ? parseInt(months, 10) : 6;
+        return this.borrowingService.getMonthlyBorrowStatsLastMonths(m);
+    }
 };
 exports.BorrowingController = BorrowingController;
 __decorate([
@@ -112,6 +116,16 @@ __decorate([
     __metadata("design:paramtypes", [Object, String, String]),
     __metadata("design:returntype", Promise)
 ], BorrowingController.prototype, "getNearbyLatestBorrows", null);
+__decorate([
+    (0, common_1.Get)("stats/monthly/last"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)("access-token"),
+    (0, swagger_1.ApiOperation)({ summary: "Monthly borrow stats for the past N months (default 6)" }),
+    __param(0, (0, common_1.Query)("months")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], BorrowingController.prototype, "getMonthlyStatsLast", null);
 exports.BorrowingController = BorrowingController = __decorate([
     (0, swagger_1.ApiTags)("Borrowing"),
     (0, common_1.Controller)("borrowing"),

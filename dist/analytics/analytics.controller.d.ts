@@ -64,6 +64,11 @@ export declare class AnalyticsController {
         count: any;
         score: any;
     }[]>;
+    getGenreDistributionAll(): Promise<{
+        genre: any;
+        count: any;
+        avgRating: number | null;
+    }[]>;
     getLateReturnStatistics(): Promise<any>;
     getRecommendations(user: any, limit?: number): Promise<{
         id: any;

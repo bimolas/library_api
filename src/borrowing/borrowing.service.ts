@@ -243,6 +243,54 @@ async getLatestBorrowsByNearbyScores(userId: string, tolerance = 10, limit = 10)
     });
   }
 
+  async getMonthlyBorrowStatsLastMonths(months = 6) {
+    // returns last `months` months including current month (ordered oldest -> newest)
+    const query = `
+      UNWIND range(0, $months - 1) AS off
+      WITH datetime() - duration({ months: off }) AS d
+      WITH d.year AS year, d.month AS monthNum
+      WITH year, monthNum
+      CALL {
+        WITH year, monthNum
+        MATCH (br:Borrow)
+        WHERE br.borrowDate IS NOT NULL
+          AND datetime(br.borrowDate).year = year
+          AND datetime(br.borrowDate).month = monthNum
+        WITH collect(br) AS bs
+        RETURN
+          size(bs) AS borrows,
+          size([b IN bs WHERE b.returnDate IS NOT NULL]) AS returns,
+          size([b IN bs WHERE b.dueDate IS NOT NULL AND (
+            (b.returnDate IS NOT NULL AND datetime(b.returnDate) > datetime(b.dueDate))
+            OR (b.returnDate IS NULL AND datetime() > datetime(b.dueDate))
+          )]) AS late
+      }
+      RETURN year, monthNum,
+        CASE monthNum
+          WHEN 1 THEN 'Jan' WHEN 2 THEN 'Feb' WHEN 3 THEN 'Mar' WHEN 4 THEN 'Apr'
+          WHEN 5 THEN 'May' WHEN 6 THEN 'Jun' WHEN 7 THEN 'Jul' WHEN 8 THEN 'Aug'
+          WHEN 9 THEN 'Sep' WHEN 10 THEN 'Oct' WHEN 11 THEN 'Nov' WHEN 12 THEN 'Dec'
+        END AS month,
+        borrows, returns, late
+      ORDER BY year, monthNum
+    `;
+
+    const result = await this.neo4j.read(query, { months });
+
+    if (!result.records) return [];
+
+    const toNum = (v: any) =>
+      v && typeof v.toNumber === "function" ? v.toNumber() : v !== undefined && v !== null ? Number(v) : 0;
+
+    return result.records.map((rec: any) => ({
+      month: rec.get("month"),
+      year: toNum(rec.get("year")),
+      borrows: toNum(rec.get("borrows")),
+      returns: toNum(rec.get("returns")),
+      late: toNum(rec.get("late")),
+    }));
+  }
+
   async getOverdueBooks(userId: string) {
     const now = new Date().toISOString();
     const query = `

@@ -62,8 +62,11 @@ let BooksController = class BooksController {
     async deleteBookCopies(bookId, quantity) {
         return this.booksService.removeBookCopies(bookId, quantity);
     }
-    async searchBooks(query, limit = 20, skip = 0) {
+    async searchBooks(query, limit = 100, skip = 0) {
         return this.booksService.searchBooks(query, limit, skip);
+    }
+    async searchBookss() {
+        return await this.booksService.getSeedData();
     }
     async getBook(id) {
         return this.booksService.getBook(id);
@@ -167,7 +170,9 @@ __decorate([
     (0, common_1.Get)("search"),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)("access-token"),
-    (0, swagger_1.ApiQuery)({ name: "q", required: true }),
+    (0, swagger_1.ApiQuery)({ name: "q", }),
+    (0, swagger_1.ApiQuery)({ name: "limit", required: false }),
+    (0, swagger_1.ApiQuery)({ name: "skip", required: false }),
     (0, swagger_1.ApiOperation)({ summary: "Search books by title, author, or ISBN" }),
     __param(0, (0, common_1.Query)("q")),
     __param(1, (0, common_1.Query)("limit")),
@@ -176,6 +181,15 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], BooksController.prototype, "searchBooks", null);
+__decorate([
+    (0, common_1.Get)("seed-data"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)("access-token"),
+    (0, swagger_1.ApiOperation)({ summary: "Seed books data" }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], BooksController.prototype, "searchBookss", null);
 __decorate([
     (0, common_1.Get)(":id"),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
@@ -200,6 +214,8 @@ __decorate([
 ], BooksController.prototype, "addComment", null);
 __decorate([
     (0, common_1.Get)(":id/comments"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)("access-token"),
     (0, swagger_1.ApiOperation)({ summary: "Get all comments for a book" }),
     __param(0, (0, common_1.Param)("id")),
     __metadata("design:type", Function),

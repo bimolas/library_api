@@ -13,9 +13,19 @@ exports.BooksService = void 0;
 const common_1 = require("@nestjs/common");
 const neo4j_service_1 = require("../neo4j/neo4j.service");
 const crypto_1 = require("crypto");
+const users_data_1 = require("../utils/seed/users-data");
 let BooksService = class BooksService {
     constructor(neo4j) {
         this.neo4j = neo4j;
+    }
+    async getSeedData() {
+        console.log("Seeding books data...");
+        const books = users_data_1.BOOKS_DATA || [];
+        console.log(`Seeding ${books.length} books...`);
+        const createdBooks = await Promise.all(books.map(async (book) => {
+            await this.createBook(book);
+        }));
+        return { createdBooks };
     }
     async deleteBook(bookId) {
         const query = `
@@ -228,8 +238,23 @@ let BooksService = class BooksService {
             })),
         };
     }
-    // ...existing code...
     async searchBooks(query, limit = 20, skip = 0) {
+        // count total matching books (without pagination)
+        const countQuery = `
+      MATCH (b:Book)
+      OPTIONAL MATCH (b)-[:BELONGS_TO]->(g:Genre)
+      WHERE
+        b.title CONTAINS $query OR
+        b.author CONTAINS $query OR
+        b.isbn CONTAINS $query OR
+        (g.name IS NOT NULL AND g.name CONTAINS $query)
+      RETURN count(DISTINCT b) AS total
+    `;
+        const countResult = await this.neo4j.read(countQuery, { query });
+        const totalRaw = countResult.records && countResult.records[0] ? countResult.records[0].get("total") : 0;
+        const total = totalRaw && typeof totalRaw.toNumber === "function"
+            ? totalRaw.toNumber()
+            : Number(totalRaw) || 0;
         const searchQuery = `
       MATCH (b:Book)
       OPTIONAL MATCH (b)-[:BELONGS_TO]->(g:Genre)
@@ -257,7 +282,6 @@ let BooksService = class BooksService {
              reviewCount AS reviewCount,
              borrowedCopies AS borrowedCopies,
              activeReservations AS activeReservations,
-             // demand pressure = percentage of copies currently in demand (borrowed + active reservations) / total copies
              CASE WHEN size(copies) = 0 THEN 0
                   ELSE ROUND(((toFloat(borrowedCopies) + toFloat(activeReservations)) / toFloat(size(copies))) * 100.0, 2)
              END AS demandPressure,
@@ -274,7 +298,7 @@ let BooksService = class BooksService {
             : v !== undefined && v !== null
                 ? Number(v)
                 : null;
-        return result.records.map((r) => {
+        const items = result.records.map((r) => {
             const bookNode = r.get("book");
             const genre = r.get("genre") ?? null;
             const copies = r.get("copies") || [];
@@ -285,7 +309,6 @@ let BooksService = class BooksService {
             const rawActiveReservations = r.get("activeReservations");
             const rawDemandPressure = r.get("demandPressure");
             const rawHighDemand = r.get("highDemand");
-            // build a node-like object compatible with mapNeo4jToBook
             const properties = {
                 ...(bookNode && bookNode.properties ? bookNode.properties : {}),
                 genre,
@@ -300,12 +323,10 @@ let BooksService = class BooksService {
                 reviewCount: toNumber(rawReviewCount) ?? 0,
             };
             const mapped = this.mapNeo4jToBook({ properties });
-            // attach demand-related fields
             const borrowedCopies = rawBorrowedCopies && typeof rawBorrowedCopies.toNumber === "function"
                 ? rawBorrowedCopies.toNumber()
                 : Number(rawBorrowedCopies) || 0;
-            const activeReservations = rawActiveReservations &&
-                typeof rawActiveReservations.toNumber === "function"
+            const activeReservations = rawActiveReservations && typeof rawActiveReservations.toNumber === "function"
                 ? rawActiveReservations.toNumber()
                 : Number(rawActiveReservations) || 0;
             const demandPressure = rawDemandPressure && typeof rawDemandPressure.toNumber === "function"
@@ -313,7 +334,7 @@ let BooksService = class BooksService {
                 : rawDemandPressure !== undefined && rawDemandPressure !== null
                     ? Number(rawDemandPressure)
                     : 0;
-            const highDemand = mapped.availableCopies <= 2 && mapped.totalCopies > 0 ? true : false;
+            const highDemand = (mapped.availableCopies < 3 && mapped.totalCopies > 0) ? true : false;
             return {
                 ...mapped,
                 borrowedCopies,
@@ -322,8 +343,19 @@ let BooksService = class BooksService {
                 highDemand, // boolean: needs more copies when true
             };
         });
+        const perPage = Math.max(1, Number(limit) || 20);
+        const currentSkip = Math.max(0, Number(skip) || 0);
+        const totalPages = perPage > 0 ? Math.ceil(total / perPage) : 0;
+        const currentPage = Math.floor(currentSkip / perPage) + 1;
+        return {
+            items,
+            total,
+            limit: perPage,
+            skip: currentSkip,
+            totalPages,
+            currentPage,
+        };
     }
-    // ...existing code...
     async getAvailableCopies(bookId) {
         const query = `
       MATCH (b:Book { id: $bookId })-[:HAS_COPY]->(bc:BookCopy { status: 'AVAILABLE' })

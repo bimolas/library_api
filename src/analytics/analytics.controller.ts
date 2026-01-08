@@ -70,6 +70,14 @@ export class AnalyticsController {
     return this.analyticsService.getGenreDistribution(userId);
   }
 
+  @Get("user/genre-distribution")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Get genre distribution for a user" })
+  async getGenreDistributionAll() {
+    return this.analyticsService.getGenreDistributionAll();
+  }
+
   @Get("late-returns")
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles("ADMIN")

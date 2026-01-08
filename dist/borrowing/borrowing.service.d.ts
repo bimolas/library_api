@@ -60,6 +60,13 @@ export declare class BorrowingService {
             reviewCount: any;
         };
     }[]>;
+    getMonthlyBorrowStatsLastMonths(months?: number): Promise<{
+        month: any;
+        year: any;
+        borrows: any;
+        returns: any;
+        late: any;
+    }[]>;
     getOverdueBooks(userId: string): Promise<{
         id: any;
         book: any;

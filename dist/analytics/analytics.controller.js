@@ -46,6 +46,9 @@ let AnalyticsController = class AnalyticsController {
     async getGenreDistribution(userId) {
         return this.analyticsService.getGenreDistribution(userId);
     }
+    async getGenreDistributionAll() {
+        return this.analyticsService.getGenreDistributionAll();
+    }
     async getLateReturnStatistics() {
         return this.analyticsService.getLateReturnStatistics();
     }
@@ -125,6 +128,15 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "getGenreDistribution", null);
+__decorate([
+    (0, common_1.Get)("user/genre-distribution"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)("access-token"),
+    (0, swagger_1.ApiOperation)({ summary: "Get genre distribution for a user" }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "getGenreDistributionAll", null);
 __decorate([
     (0, common_1.Get)("late-returns"),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, role_guard_1.RoleGuard),

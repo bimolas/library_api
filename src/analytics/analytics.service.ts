@@ -423,6 +423,43 @@ async getPlatformSummary() {
   }
 
   // ...existing code...
+  async getGenreDistributionAll() {
+    const query = `
+      MATCH (:User)-[:BORROWED]->(br:Borrow)-[:OF_COPY]->(:BookCopy)<-[:HAS_COPY]-(book:Book)-[:BELONGS_TO]->(g:Genre)
+      OPTIONAL MATCH (book)<-[:ON]-(rev:Review)
+      WITH g.name AS genre, COUNT(DISTINCT br) AS borrowCount, AVG(rev.rating) AS avgRating
+      RETURN genre, borrowCount AS count, avgRating
+      ORDER BY count DESC
+    `;
+
+    const result = await this.neo4j.read(query);
+    if (!result.records) return [];
+
+    return result.records.map((r: any) => {
+      const rawCount = r.get("count");
+      const count =
+        rawCount && typeof rawCount.toNumber === "function"
+          ? rawCount.toNumber()
+          : Number(rawCount) || 0;
+
+      const rawAvg = r.get("avgRating");
+      const avgRating =
+        rawAvg === null || rawAvg === undefined
+          ? null
+          : typeof rawAvg.toNumber === "function"
+          ? Math.round(rawAvg.toNumber() * 100) / 100
+          : Math.round(Number(rawAvg) * 100) / 100;
+
+      return {
+        genre: r.get("genre"),
+        count,
+        avgRating,
+      };
+    });
+  }
+// ...existing code...
+
+  // ...existing code...
   async getRecommendations(userId: string, limit = 10) {
     const query = `
       MATCH (u:User { id: $userId })

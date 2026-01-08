@@ -77,4 +77,11 @@ export declare class BorrowingController {
             reviewCount: any;
         };
     }[]>;
+    getMonthlyStatsLast(months?: string): Promise<{
+        month: any;
+        year: any;
+        borrows: any;
+        returns: any;
+        late: any;
+    }[]>;
 }

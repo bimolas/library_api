@@ -1,0 +1,278 @@
+export const BOOKS_DATA = [
+  {
+    title: "Harry Potter and the Philosopher's Stone",
+    author: "J.K. Rowling",
+    isbn: "9780747532699",
+    description: "A young boy discovers he is a wizard and begins his journey at Hogwarts School of Witchcraft and Wizardry.",
+    genre: "Fantasy",
+    coverImage: "https://covers.openlibrary.org/b/id/7984916-L.jpg",
+    pages: "340",
+    totalCopies: "5",
+    language: "English"
+  },
+  {
+    title: "The Hobbit",
+    author: "J.R.R. Tolkien",
+    isbn: "9780547928227",
+    description: "Bilbo Baggins embarks on an unexpected adventure to help reclaim a lost dwarf kingdom.",
+    genre: "Fantasy",
+    coverImage: "https://covers.openlibrary.org/b/id/6979861-L.jpg",
+    pages: "310",
+    totalCopies: "7",
+    language: "English"
+  },
+  {
+    title: "1984",
+    author: "George Orwell",
+    isbn: "9780451524935",
+    description: "A dystopian novel about totalitarian control, surveillance, and the loss of freedom.",
+    genre: "Dystopian",
+    coverImage: "https://covers.openlibrary.org/b/id/7222246-L.jpg",
+    pages: "328",
+    totalCopies: "6",
+    language: "English"
+  },
+  {
+    title: "To Kill a Mockingbird",
+    author: "Harper Lee",
+    isbn: "9780061120084",
+    description: "A powerful story of racial injustice and moral growth in the American South.",
+    genre: "Classic",
+    coverImage: "https://covers.openlibrary.org/b/id/8228691-L.jpg",
+    pages: "336",
+    totalCopies: "4",
+    language: "English"
+  },
+  {
+    title: "The Great Gatsby",
+    author: "F. Scott Fitzgerald",
+    isbn: "9780743273565",
+    description: "A tragic tale of wealth, love, and the American Dream in the 1920s.",
+    genre: "Classic",
+    coverImage: "https://covers.openlibrary.org/b/id/7352164-L.jpg",
+    pages: "180",
+    totalCopies: "5",
+    language: "English"
+  },
+  {
+    title: "The Catcher in the Rye",
+    author: "J.D. Salinger",
+    isbn: "9780316769488",
+    description: "A teenager’s cynical journey through New York City and his struggle with adulthood.",
+    genre: "Fiction",
+    coverImage: "https://covers.openlibrary.org/b/id/8231856-L.jpg",
+    pages: "277",
+    totalCopies: "3",
+    language: "English"
+  },
+  {
+    title: "Pride and Prejudice",
+    author: "Jane Austen",
+    isbn: "9780141439518",
+    description: "A romantic novel exploring manners, upbringing, and marriage in 19th-century England.",
+    genre: "Romance",
+    coverImage: "https://covers.openlibrary.org/b/id/8091016-L.jpg",
+    pages: "279",
+    totalCopies: "6",
+    language: "English"
+  },
+  {
+    title: "The Alchemist",
+    author: "Paulo Coelho",
+    isbn: "9780062315007",
+    description: "A philosophical story about following your dreams and listening to your heart.",
+    genre: "Adventure",
+    coverImage: "https://covers.openlibrary.org/b/id/8101341-L.jpg",
+    pages: "208",
+    totalCopies: "8",
+    language: "English"
+  },
+  {
+    title: "The Da Vinci Code",
+    author: "Dan Brown",
+    isbn: "9780307474278",
+    description: "A fast-paced thriller involving secret societies, religious mysteries, and symbols.",
+    genre: "Thriller",
+    coverImage: "https://covers.openlibrary.org/b/id/240726-L.jpg",
+    pages: "489",
+    totalCopies: "5",
+    language: "English"
+  },
+  {
+    title: "Sapiens: A Brief History of Humankind",
+    author: "Yuval Noah Harari",
+    isbn: "9780062316097",
+    description: "An exploration of human history from the Stone Age to the modern era.",
+    genre: "History",
+    coverImage: "https://covers.openlibrary.org/b/id/8370226-L.jpg",
+    pages: "443",
+    totalCopies: "4",
+    language: "English"
+  },
+  {
+    title: "Atomic Habits",
+    author: "James Clear",
+    isbn: "9780735211292",
+    description: "A practical guide on building good habits and breaking bad ones.",
+    genre: "Self-Help",
+    coverImage: "https://covers.openlibrary.org/b/id/9251996-L.jpg",
+    pages: "320",
+    totalCopies: "10",
+    language: "English"
+  },
+  {
+    title: "The Subtle Art of Not Giving a F*ck",
+    author: "Mark Manson",
+    isbn: "9780062457714",
+    description: "A counterintuitive approach to living a good life.",
+    genre: "Self-Help",
+    coverImage: "https://covers.openlibrary.org/b/id/8167892-L.jpg",
+    pages: "224",
+    totalCopies: "7",
+    language: "English"
+  },
+  {
+    title: "Rich Dad Poor Dad",
+    author: "Robert T. Kiyosaki",
+    isbn: "9781612680194",
+    description: "Lessons on financial literacy and wealth-building through mindset changes.",
+    genre: "Finance",
+    coverImage: "https://covers.openlibrary.org/b/id/6900916-L.jpg",
+    pages: "336",
+    totalCopies: "6",
+    language: "English"
+  },
+  {
+    title: "Think and Grow Rich",
+    author: "Napoleon Hill",
+    isbn: "9781585424337",
+    description: "A classic guide on success, mindset, and personal achievement.",
+    genre: "Motivation",
+    coverImage: "https://covers.openlibrary.org/b/id/8315046-L.jpg",
+    pages: "238",
+    totalCopies: "5",
+    language: "English"
+  },
+  {
+    title: "Clean Code",
+    author: "Robert C. Martin",
+    isbn: "9780132350884",
+    description: "A handbook of agile software craftsmanship and best coding practices.",
+    genre: "Technology",
+    coverImage: "https://covers.openlibrary.org/b/id/9611985-L.jpg",
+    pages: "464",
+    totalCopies: "3",
+    language: "English"
+  },
+  {
+    title: "The Lord of the Rings: The Fellowship of the Ring",
+    author: "J.R.R. Tolkien",
+    isbn: "9780547928210",
+    description: "A group of heroes begins a perilous journey to destroy a powerful ring.",
+    genre: "Fantasy",
+    coverImage: "https://covers.openlibrary.org/b/id/8231996-L.jpg",
+    pages: "423",
+    totalCopies: "4",
+    language: "English"
+  },
+  {
+    title: "Brave New World",
+    author: "Aldous Huxley",
+    isbn: "9780060850524",
+    description: "A futuristic society where happiness is engineered and individuality is suppressed.",
+    genre: "Dystopian",
+    coverImage: "https://covers.openlibrary.org/b/id/8773273-L.jpg",
+    pages: "288",
+    totalCopies: "5",
+    language: "English"
+  },
+  {
+    title: "The Kite Runner",
+    author: "Khaled Hosseini",
+    isbn: "9781594631931",
+    description: "A deeply emotional story of friendship, guilt, and redemption set in Afghanistan.",
+    genre: "Drama",
+    coverImage: "https://covers.openlibrary.org/b/id/8235116-L.jpg",
+    pages: "371",
+    totalCopies: "6",
+    language: "English"
+  },
+  {
+    title: "The Book Thief",
+    author: "Markus Zusak",
+    isbn: "9780375842207",
+    description: "A young girl finds comfort in stealing books during Nazi Germany.",
+    genre: "Historical Fiction",
+    coverImage: "https://covers.openlibrary.org/b/id/8225261-L.jpg",
+    pages: "552",
+    totalCopies: "4",
+    language: "English"
+  },
+  {
+    title: "The Chronicles of Narnia: The Lion, the Witch and the Wardrobe",
+    author: "C.S. Lewis",
+    isbn: "9780064471046",
+    description: "Four siblings discover a magical land ruled by a tyrannical queen.",
+    genre: "Fantasy",
+    coverImage: "https://covers.openlibrary.org/b/id/6979746-L.jpg",
+    pages: "208",
+    totalCopies: "8",
+    language: "English"
+  },
+  {
+    title: "The Lean Startup",
+    author: "Eric Ries",
+    isbn: "9780307887894",
+    description: "A modern approach to building successful startups through continuous innovation.",
+    genre: "Business",
+    coverImage: "https://covers.openlibrary.org/b/id/7269861-L.jpg",
+    pages: "336",
+    totalCopies: "5",
+    language: "English"
+  },
+  {
+    title: "Deep Work",
+    author: "Cal Newport",
+    isbn: "9781455586691",
+    description: "Strategies for focused success in a distracted world.",
+    genre: "Productivity",
+    coverImage: "https://covers.openlibrary.org/b/id/8167898-L.jpg",
+    pages: "304",
+    totalCopies: "7",
+    language: "English"
+  },
+  {
+    title: "The Power of Habit",
+    author: "Charles Duhigg",
+    isbn: "9780812981605",
+    description: "An exploration of how habits work and how they can be changed.",
+    genre: "Psychology",
+    coverImage: "https://covers.openlibrary.org/b/id/7261543-L.jpg",
+    pages: "371",
+    totalCopies: "6",
+    language: "English"
+  },
+  {
+    title: "Man's Search for Meaning",
+    author: "Viktor E. Frankl",
+    isbn: "9780807014271",
+    description: "A psychiatrist reflects on life, suffering, and purpose during the Holocaust.",
+    genre: "Philosophy",
+    coverImage: "https://covers.openlibrary.org/b/id/8774762-L.jpg",
+    pages: "184",
+    totalCopies: "5",
+    language: "English"
+  },
+  {
+    title: "The Pragmatic Programmer",
+    author: "Andrew Hunt & David Thomas",
+    isbn: "9780201616224",
+    description: "Essential tips and philosophies for becoming a better software developer.",
+    genre: "Technology",
+    coverImage: "https://covers.openlibrary.org/b/id/8099256-L.jpg",
+    pages: "352",
+    totalCopies: "3",
+    language: "English"
+  }
+
+]

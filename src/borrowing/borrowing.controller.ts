@@ -81,4 +81,14 @@ export class BorrowingController {
       lim
     );
   }
+  @Get("stats/monthly/last")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("access-token")
+  @ApiOperation({ summary: "Monthly borrow stats for the past N months (default 6)" })
+  async getMonthlyStatsLast(
+    @Query("months") months?: string
+  ) {
+    const m = months ? parseInt(months, 10) : 6;
+    return this.borrowingService.getMonthlyBorrowStatsLastMonths(m);
+  }
 }
