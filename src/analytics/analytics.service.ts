@@ -309,7 +309,8 @@ async getPlatformSummary() {
         borrowCount: borrowCount,
         avgRating: avgRating,
         reviewCount: reviewCount,
-        genre: genre
+        genre: genre,
+        coverImage: book.coverImage
       } AS bookStats
       ORDER BY borrowCount DESC
       LIMIT $limit
@@ -343,6 +344,7 @@ async getPlatformSummary() {
             ? rawReviewCount.toNumber()
             : Number(rawReviewCount) || 0,
         genre,
+        coverImage: s.coverImage ?? null,
       };
     });
   }

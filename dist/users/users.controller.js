@@ -117,8 +117,9 @@ __decorate([
 ], UsersController.prototype, "getAllUsers", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, role_guard_1.RoleGuard),
-    (0, roles_decorator_1.Roles)("ADMIN"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, role_guard_1.RoleGuard)
+    // @Roles("ADMIN")
+    ,
     (0, swagger_1.ApiBearerAuth)("access-token"),
     (0, swagger_1.ApiOperation)({ summary: "Create a new user (admin only)" }),
     (0, swagger_1.ApiBody)({ type: create_user_with_role_dto_1.CreateUserWithRoleDto }),

@@ -26,6 +26,7 @@ export declare class BorrowingController {
             id: any;
             title: any;
             author: any;
+            coverImage: any;
         };
         copy: {
             id: any;
@@ -42,6 +43,7 @@ export declare class BorrowingController {
             id: any;
             title: any;
             author: any;
+            coverImage: any;
         };
         copy: {
             id: any;

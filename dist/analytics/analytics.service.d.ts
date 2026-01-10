@@ -56,6 +56,7 @@ export declare class AnalyticsService {
         avgRating: any;
         reviewCount: any;
         genre: any;
+        coverImage: any;
     }[]>;
     getMostReservedBooks(limit?: number): Promise<any[]>;
     getDemandVsSupply(): Promise<any[]>;

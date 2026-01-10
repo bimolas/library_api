@@ -30,6 +30,7 @@ export declare class BorrowingService {
             id: any;
             title: any;
             author: any;
+            coverImage: any;
         };
         copy: {
             id: any;

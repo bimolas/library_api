@@ -108,6 +108,7 @@ let ReservationService = class ReservationService {
                 description: r.get("b").properties.description,
                 publicationYear: r.get("b").properties.publicationYear,
                 genre: r.get("b").properties.genre,
+                coverImage: r.get("b").properties.coverImage ?? null,
             },
             startDate: r.get("r").properties.startDate,
             endDate: r.get("r").properties.endDate,

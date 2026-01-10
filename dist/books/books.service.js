@@ -238,23 +238,7 @@ let BooksService = class BooksService {
             })),
         };
     }
-    async searchBooks(query, limit = 20, skip = 0) {
-        // count total matching books (without pagination)
-        const countQuery = `
-      MATCH (b:Book)
-      OPTIONAL MATCH (b)-[:BELONGS_TO]->(g:Genre)
-      WHERE
-        b.title CONTAINS $query OR
-        b.author CONTAINS $query OR
-        b.isbn CONTAINS $query OR
-        (g.name IS NOT NULL AND g.name CONTAINS $query)
-      RETURN count(DISTINCT b) AS total
-    `;
-        const countResult = await this.neo4j.read(countQuery, { query });
-        const totalRaw = countResult.records && countResult.records[0] ? countResult.records[0].get("total") : 0;
-        const total = totalRaw && typeof totalRaw.toNumber === "function"
-            ? totalRaw.toNumber()
-            : Number(totalRaw) || 0;
+    async searchBooks(query, limit = 20, page = 1) {
         const searchQuery = `
       MATCH (b:Book)
       OPTIONAL MATCH (b)-[:BELONGS_TO]->(g:Genre)
@@ -289,16 +273,21 @@ let BooksService = class BooksService {
                   WHEN ((toFloat(borrowedCopies) + toFloat(activeReservations)) / toFloat(size(copies))) >= 0.7 THEN true
                   ELSE false
              END AS highDemand
-      SKIP $skip
-      LIMIT $limit
+     
     `;
-        const result = await this.neo4j.read(searchQuery, { query, skip, limit });
+        const result = await this.neo4j.read(searchQuery, { query });
+        const total = result.records.length;
         const toNumber = (v) => v && typeof v.toNumber === "function"
             ? v.toNumber()
             : v !== undefined && v !== null
                 ? Number(v)
                 : null;
-        const items = result.records.map((r) => {
+        const pagee = Math.max(1, Number(limit) || 20);
+        const currentPagee = Math.max(1, Number(page) || 1);
+        const start = Math.floor((currentPagee - 1) * pagee);
+        const end = Math.floor(start + pagee);
+        const pageRecords = result.records.slice(start, end);
+        const items = pageRecords.map((r) => {
             const bookNode = r.get("book");
             const genre = r.get("genre") ?? null;
             const copies = r.get("copies") || [];
@@ -326,7 +315,8 @@ let BooksService = class BooksService {
             const borrowedCopies = rawBorrowedCopies && typeof rawBorrowedCopies.toNumber === "function"
                 ? rawBorrowedCopies.toNumber()
                 : Number(rawBorrowedCopies) || 0;
-            const activeReservations = rawActiveReservations && typeof rawActiveReservations.toNumber === "function"
+            const activeReservations = rawActiveReservations &&
+                typeof rawActiveReservations.toNumber === "function"
                 ? rawActiveReservations.toNumber()
                 : Number(rawActiveReservations) || 0;
             const demandPressure = rawDemandPressure && typeof rawDemandPressure.toNumber === "function"
@@ -334,7 +324,7 @@ let BooksService = class BooksService {
                 : rawDemandPressure !== undefined && rawDemandPressure !== null
                     ? Number(rawDemandPressure)
                     : 0;
-            const highDemand = (mapped.availableCopies < 3 && mapped.totalCopies > 0) ? true : false;
+            const highDemand = mapped.availableCopies < 3 && mapped.totalCopies > 0 ? true : false;
             return {
                 ...mapped,
                 borrowedCopies,
@@ -344,7 +334,7 @@ let BooksService = class BooksService {
             };
         });
         const perPage = Math.max(1, Number(limit) || 20);
-        const currentSkip = Math.max(0, Number(skip) || 0);
+        const currentSkip = Math.max(0, Number(page) || 0);
         const totalPages = perPage > 0 ? Math.ceil(total / perPage) : 0;
         const currentPage = Math.floor(currentSkip / perPage) + 1;
         return {

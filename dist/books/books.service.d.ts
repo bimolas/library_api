@@ -92,7 +92,7 @@ export declare class BooksService {
         borrowCount: any;
         reviewCount: any;
     }>;
-    searchBooks(query: string, limit?: number, skip?: number): Promise<{
+    searchBooks(query: string, limit?: number, page?: number): Promise<{
         items: {
             borrowedCopies: any;
             activeReservations: any;
@@ -117,7 +117,7 @@ export declare class BooksService {
             borrowCount: any;
             reviewCount: any;
         }[];
-        total: any;
+        total: number;
         limit: number;
         skip: number;
         totalPages: number;

@@ -83,7 +83,7 @@ export declare class BooksController {
             borrowCount: any;
             reviewCount: any;
         }[];
-        total: any;
+        total: number;
         limit: number;
         skip: number;
         totalPages: number;

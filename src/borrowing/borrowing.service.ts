@@ -153,6 +153,7 @@ export class BorrowingService {
         id: r.get("book").properties.id,
         title: r.get("book").properties.title,
         author: r.get("book").properties.author,
+        coverImage: r.get("book").properties.coverImage ?? null,
       },
       copy: {
         id: r.get("bc").properties.id,

@@ -35,6 +35,7 @@ export declare class ReservationService {
             description: any;
             publicationYear: any;
             genre: any;
+            coverImage: any;
         };
         startDate: any;
         endDate: any;
