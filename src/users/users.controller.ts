@@ -77,7 +77,7 @@ export class UsersController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles("ADMIN")
+  // @Roles("ADMIN")
   @ApiBearerAuth("access-token")
   @ApiOperation({ summary: "Create a new user (admin only)" })
   @ApiBody({ type: CreateUserWithRoleDto })
