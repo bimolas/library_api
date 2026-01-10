@@ -352,7 +352,7 @@ let AnalyticsService = class AnalyticsService {
         const query = `
       MATCH (user:User { id: $userId })-[:BORROWED]->(b:Borrow)-[:OF_COPY]->(bc:BookCopy)<-[:HAS_COPY]-(book:Book)-[:BELONGS_TO]->(g:Genre)
       OPTIONAL MATCH (user)-[:REVIEWED]->(rev:Review)-[:ON]->(book)
-      WITH g.name AS genre, COUNT(DISTINCT b) AS borrowCount, SUM(COALESCE(rev.rating, 0)) AS totalScore
+      WITH g.name AS genre, COUNT(DISTINCT b) AS borrowCount, g.score AS totalScore
       RETURN genre, borrowCount AS count, totalScore
       ORDER BY count DESC
     `;
@@ -371,11 +371,10 @@ let AnalyticsService = class AnalyticsService {
             return {
                 genre: r.get("genre"),
                 count,
-                score: totalScore,
+                score: totalScore === 0 ? 5 : totalScore,
             };
         });
     }
-    // ...existing code...
     async getGenreDistributionAll() {
         const query = `
       MATCH (:User)-[:BORROWED]->(br:Borrow)-[:OF_COPY]->(:BookCopy)<-[:HAS_COPY]-(book:Book)-[:BELONGS_TO]->(g:Genre)
@@ -405,8 +404,6 @@ let AnalyticsService = class AnalyticsService {
             };
         });
     }
-    // ...existing code...
-    // ...existing code...
     async getRecommendations(userId, limit = 10) {
         const query = `
       MATCH (u:User { id: $userId })
@@ -428,16 +425,21 @@ let AnalyticsService = class AnalyticsService {
       OPTIONAL MATCH (candidate)<-[:OF_BOOK]-(res:Reservation { status: 'ACTIVE' })
       OPTIONAL MATCH (candidate)<-[:ON]-(rev:Review)
 
-      WITH candidate, g2,
+      WITH candidate, g2, brAll, bc, brActive, res, rev
+
+      WITH candidate.title AS titleKey,
+           candidate,
+           COLLECT(DISTINCT g2.name) AS genres,
            COUNT(DISTINCT brAll) AS popularity,
            COUNT(DISTINCT bc) AS totalCopies,
            COUNT(DISTINCT brActive) AS borrowedCopies,
            COUNT(DISTINCT res) AS activeReservations,
            AVG(rev.rating) AS avgRating
 
-      // collect genres for the candidate (usually single) and aggregate
-      WITH candidate, COLLECT(DISTINCT g2.name) AS genres, popularity, totalCopies, borrowedCopies, activeReservations, avgRating
-      RETURN candidate { .id, .title, .author, .description, .publicationYear } AS book,
+      // group by titleKey to avoid returning duplicate books with same title
+      WITH titleKey, head(collect(candidate)) AS bookNode, genres, popularity, totalCopies, borrowedCopies, activeReservations, avgRating
+
+      RETURN bookNode { .id, .title, .author, .description, .publicationYear, .coverImage } AS book,
              genres,
              popularity,
              totalCopies,
@@ -483,6 +485,7 @@ let AnalyticsService = class AnalyticsService {
                 author: bookObj.author,
                 description: bookObj.description,
                 publicationYear: bookObj.publicationYear,
+                coverImage: bookObj.coverImage ?? null,
                 genres, // array of genre names (usually one)
                 genre: Array.isArray(genres) && genres.length > 0 ? genres[0] : null,
                 popularity,
@@ -493,7 +496,6 @@ let AnalyticsService = class AnalyticsService {
             };
         });
     }
-    // ...existing code...
     async getLateReturnStatistics() {
         const query = `
       MATCH (b:Borrow { status: 'COMPLETED' })

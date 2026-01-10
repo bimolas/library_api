@@ -19,7 +19,6 @@ export class BorrowingService {
 
   async borrowBook(userId: string, createBorrowDto: CreateBorrowDto) {
     const borrowId = uuid();
-    console.log("🚀 ~ BorrowingService ~ borrowBook ~ createBorrowDto:", createBorrowDto);
     const privileges = await this.scoreService.getPrivileges(userId);
     // Check user hasn't reached max concurrent borrows
     const activeBorrows = await this.getActiveBorrowCount(userId);
@@ -67,6 +66,17 @@ export class BorrowingService {
       borrowDate: borrowDate.toISOString(),
       dueDate: dueDate.toISOString(),
     });
+
+     await this.neo4j.write(
+      `
+      MATCH (bk:Book)-[:HAS_COPY]->(bc:BookCopy { id: $copyId })
+      MATCH (bk)-[:BELONGS_TO]->(g:Genre)
+      SET g.score = coalesce(g.score, 0) + 10
+      RETURN g
+      `,
+      { copyId: selectedCopyId }
+    );
+
 
     return {
       id: borrowId,

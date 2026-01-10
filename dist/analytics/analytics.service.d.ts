@@ -75,6 +75,7 @@ export declare class AnalyticsService {
         author: any;
         description: any;
         publicationYear: any;
+        coverImage: any;
         genres: any;
         genre: any;
         popularity: any;

@@ -76,6 +76,7 @@ export declare class AnalyticsController {
         author: any;
         description: any;
         publicationYear: any;
+        coverImage: any;
         genres: any;
         genre: any;
         popularity: any;
