@@ -1,127 +1,73 @@
-# Library Management System - NestJS REST API
+# 📚 Library Management API
 
-A production-ready REST API for a Library Management System built with **NestJS**, **TypeScript**, and **Neo4j**.
+> A NestJS and Neo4j REST API for library management, graph-based recommendations, reservations, borrowing workflows, analytics, and role-based access control.
+
+[![NestJS](https://img.shields.io/badge/NestJS-Backend-E0234E?style=flat-square&logo=nestjs&logoColor=white)](https://nestjs.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Neo4j](https://img.shields.io/badge/Neo4j-Graph%20Database-008CC1?style=flat-square&logo=neo4j&logoColor=white)](https://neo4j.com/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Swagger](https://img.shields.io/badge/Swagger-OpenAPI-85EA2D?style=flat-square&logo=swagger&logoColor=black)](https://swagger.io/)
+
+## Overview
+
+This project implements a library management backend around a graph data model rather than a traditional relational schema.
+
+It covers authentication, users, books, copies, borrowing, reservations, scoring, analytics, and recommendation logic. Neo4j is used to model and traverse relationships between users, books, genres, reviews, reservations, and borrowing activity.
 
 ## Features
 
-- **JWT Authentication** with role-based access control
-- **User Score & Priority System** for dynamic borrowing privileges
-- **Book Borrowing & Reservations** with calendar-based availability
-- **Real-time Analytics** for trending books and user behavior
-- **Recommendations Engine** using graph traversal
-- **Admin Dashboard** capabilities
-- **Swagger Documentation** for all endpoints
-- **Neo4j Graph Database** for complex relationship management
+- JWT authentication and role-based access control
+- Book catalog and copy management
+- Borrowing and returns
+- Reservation queues and calendar availability
+- User score and privilege tiers
+- Analytics for trends, demand, and user behavior
+- Graph-based recommendation engine
+- Swagger API documentation
+- Dockerized Neo4j and API deployment
 
 ## Architecture
 
+```text
+                         ┌────────────────────┐
+                         │       REST API      │
+                         │      NestJS         │
+                         └─────────┬──────────┘
+                                   │
+             ┌─────────────────────┼─────────────────────┐
+             ▼                     ▼                     ▼
+       ┌───────────┐        ┌─────────────┐       ┌────────────┐
+       │   Auth    │        │  Business   │       │ Analytics  │
+       │ JWT / RBAC│        │   Modules   │       │ & Scoring  │
+       └───────────┘        └──────┬──────┘       └─────┬──────┘
+                                   │                    │
+                                   └────────┬───────────┘
+                                            ▼
+                                     ┌─────────────┐
+                                     │   Neo4j     │
+                                     │ Graph Data  │
+                                     └─────────────┘
 ```
+
+## Domain Modules
+
+```text
 src/
-├── auth/                 # Authentication & Authorization
-├── users/                # User management & profiles
-├── books/                # Book catalog management
-├── borrowing/            # Borrow operations
-├── reservation/          # Reservation calendar logic
-├── analytics/            # User & system analytics
-├── score/                # Score & privilege system
-├── neo4j/                # Database service
-└── main.ts               # Application entry
+├── auth/          # Authentication & authorization
+├── users/         # Profiles and user management
+├── books/         # Books and catalog
+├── borrowing/     # Borrow / return workflows
+├── reservation/   # Reservations and queues
+├── analytics/     # System and user analytics
+├── score/         # User scoring and privileges
+└── neo4j/         # Graph database integration
 ```
 
-## Installation
+## Graph Model
 
-### Prerequisites
-- Node.js 18+
-- Docker & Docker Compose (for Neo4j)
-- npm or yarn
+The domain is represented through relationships that are useful for graph traversal:
 
-### Setup
-
-1. **Clone and install dependencies:**
-   ```bash
-   npm install
-   ```
-
-2. **Set up environment variables:**
-   ```bash
-   cp .env.example .env
-   ```
-   Update `.env` with your Neo4j credentials
-
-3. **Start Neo4j with Docker:**
-   ```bash
-   docker-compose up -d neo4j
-   ```
-
-4. **Run the application:**
-   ```bash
-   npm run start:dev
-   ```
-
-5. **Seed the database (optional):**
-   ```bash
-   npm run seed
-   ```
-
-## API Documentation
-
-Once running, Swagger docs are available at: **http://localhost:3000/docs**
-
-## Key Endpoints
-
-### Authentication
-- `POST /api/auth/sign-up` - Register new user
-- `POST /api/auth/sign-in` - Login
-- `POST /api/auth/refresh` - Refresh token
-
-### Books
-- `GET /api/books/search` - Search books
-- `GET /api/books/:id` - Get book details
-- `POST /api/books` - Create book (admin)
-- `PATCH /api/books/:id` - Update book (admin)
-
-### Borrowing
-- `POST /api/borrowing` - Borrow a book
-- `POST /api/borrowing/:id/return` - Return book
-- `GET /api/borrowing` - User's borrow history
-- `GET /api/borrowing/overdue` - Overdue books
-
-### Reservations
-- `POST /api/reservations` - Create reservation
-- `GET /api/reservations` - User's reservations
-- `DELETE /api/reservations/:id` - Cancel reservation
-- `GET /api/reservations/book/:bookId/queue` - Reservation queue
-
-### Users
-- `GET /api/users/profile` - Get user profile
-- `PATCH /api/users/profile` - Update profile
-- `GET /api/users/:id/analytics` - User analytics
-
-### Analytics
-- `GET /api/analytics/user/me` - Personal analytics
-- `GET /api/analytics/trending-books` - Trending books
-- `GET /api/analytics/demand-vs-supply` - Inventory analysis
-- `GET /api/analytics/genre-distribution` - Genre statistics
-
-## Score System
-
-Users earn points for:
-- **+10** - On-time book return
-- **-25** - Late return (+ penalties for late days)
-- **-5** - Reservation cancellation
-- **+5** - Reading diverse genres
-- **+3** - Regular activity
-
-Score tiers unlock privileges:
-- **BRONZE** (0-99): 3 concurrent borrows, 21 days
-- **SILVER** (100-149): 5 concurrent borrows, 30 days
-- **GOLD** (150-299): 8 concurrent borrows, 45 days
-- **DIAMOND** (300+): 10 concurrent borrows, 60 days
-
-## Database Schema
-
-Core Neo4j nodes and relationships:
-```
+```text
 (User)-[:BORROWED]->(Borrow)-[:OF_COPY]->(BookCopy)
 (User)-[:RESERVED]->(Reservation)-[:OF_BOOK]->(Book)
 (Book)-[:HAS_COPY]->(BookCopy)
@@ -130,120 +76,132 @@ Core Neo4j nodes and relationships:
 (User)-[:HAS_SCORE_EVENT]->(ScoreEvent)
 ```
 
-## Development
+This model makes relationship-heavy features such as recommendations, user behavior analysis, and related-book discovery natural to implement with Neo4j.
+
+## API Surface
+
+### Authentication
+- `POST /api/auth/sign-up`
+- `POST /api/auth/sign-in`
+- `POST /api/auth/refresh`
+
+### Books
+- `GET /api/books/search`
+- `GET /api/books/:id`
+- `POST /api/books`
+- `PATCH /api/books/:id`
+
+### Borrowing
+- `POST /api/borrowing`
+- `POST /api/borrowing/:id/return`
+- `GET /api/borrowing`
+- `GET /api/borrowing/overdue`
+
+### Reservations
+- `POST /api/reservations`
+- `GET /api/reservations`
+- `DELETE /api/reservations/:id`
+- `GET /api/reservations/book/:bookId/queue`
+
+### Analytics
+- `GET /api/analytics/user/me`
+- `GET /api/analytics/trending-books`
+- `GET /api/analytics/demand-vs-supply`
+- `GET /api/analytics/genre-distribution`
+
+## User Score System
+
+User activity affects a score that determines borrowing privileges.
+
+| Tier | Score | Concurrent borrows | Loan duration |
+|---|---:|---:|---:|
+| Bronze | 0–99 | 3 | 21 days |
+| Silver | 100–149 | 5 | 30 days |
+| Gold | 150–299 | 8 | 45 days |
+| Diamond | 300+ | 10 | 60 days |
+
+Examples of score events include on-time returns, late returns, reservation cancellations, genre diversity, and regular activity.
+
+## Technology Stack
+
+| Technology | Responsibility |
+|---|---|
+| NestJS | REST API and application architecture |
+| TypeScript | Application language |
+| Neo4j | Graph persistence and traversal |
+| JWT | Authentication |
+| RBAC | Authorization |
+| Swagger / OpenAPI | API documentation |
+| Docker Compose | Local deployment |
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+- Docker and Docker Compose
+
+### Install
 
 ```bash
-# Start development server with hot reload
+npm install
+cp .env.example .env
+```
+
+Configure the Neo4j and JWT values in `.env`.
+
+### Start Neo4j
+
+```bash
+docker compose up -d neo4j
+```
+
+### Run the API
+
+```bash
 npm run start:dev
+```
 
-# Run linting
-npm run lint
+Swagger documentation is available at:
 
-# Format code
-npm run format
+```text
+http://localhost:3000/docs
+```
 
-# Build for production
+### Build / production
+
+```bash
 npm run build
-
-# Start production server
 npm start
 ```
 
-## Deployment
-
-### Docker Deployment
+## Development
 
 ```bash
-docker-compose up -d
-```
-
-This will:
-- Start Neo4j database on port 7687
-- Build and start the API on port 3000
-- Create persistent volumes for data
-
-### Environment Variables
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `NEO4J_URI` | Neo4j connection URL | `bolt://localhost:7687` |
-| `NEO4J_USER` | Neo4j username | `neo4j` |
-| `NEO4J_PASSWORD` | Neo4j password | `password` |
-| `JWT_SECRET` | Secret key for JWT signing | `your-secret-key` |
-| `PORT` | Server port | `3000` |
-| `NODE_ENV` | Environment | `development` or `production` |
-
-## Project Structure
-
-```
-src/
-├── auth/
-│   ├── auth.module.ts
-│   ├── auth.service.ts
-│   ├── auth.controller.ts
-│   ├── decorators/
-│   ├── guards/
-│   ├── strategies/
-│   └── dto/
-├── users/
-│   ├── users.module.ts
-│   ├── users.service.ts
-│   ├── users.controller.ts
-│   └── dto/
-├── books/
-│   ├── books.module.ts
-│   ├── books.service.ts
-│   ├── books.controller.ts
-│   └── dto/
-├── borrowing/
-│   ├── borrowing.module.ts
-│   ├── borrowing.service.ts
-│   ├── borrowing.controller.ts
-│   └── dto/
-├── reservation/
-│   ├── reservation.module.ts
-│   ├── reservation.service.ts
-│   ├── reservation.controller.ts
-│   └── dto/
-├── analytics/
-│   ├── analytics.module.ts
-│   ├── analytics.service.ts
-│   ├── analytics.controller.ts
-│   └── dto/
-├── score/
-│   ├── score.module.ts
-│   ├── score.service.ts
-│   └── score.controller.ts
-├── neo4j/
-│   ├── neo4j.module.ts
-│   ├── neo4j.service.ts
-│   └── constants.ts
-├── app.module.ts
-└── main.ts
+npm run start:dev
+npm run lint
+npm run format
+npm run build
 ```
 
 ## Testing the API
 
-### Sign Up
-```bash
-curl -X POST http://localhost:3000/api/auth/sign-up \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"password123","name":"John Doe"}'
-```
+Example authentication request:
 
-### Sign In
 ```bash
 curl -X POST http://localhost:3000/api/auth/sign-in \
   -H "Content-Type: application/json" \
   -d '{"email":"user@example.com","password":"password123"}'
 ```
 
-### Access Protected Endpoints
+Protected endpoints use a bearer token:
+
 ```bash
-curl -X GET http://localhost:3000/api/users/profile \
+curl http://localhost:3000/api/users/profile \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
-## License
+## Project Status
 
-MIT
+A backend engineering project focused on REST API design, authorization, graph data modeling, relationship-heavy business logic, analytics, and recommendation workflows.
